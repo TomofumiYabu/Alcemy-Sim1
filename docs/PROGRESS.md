@@ -13,7 +13,7 @@
 - 開発準備画面を追加。デスクトップ/モバイル向けレイアウトと目標の展開操作を用意。
 - `AGENTS.md`、README、調査・仕様案・技術構成・行動計画を作成。
 - Cloud設定の `install_script` と `start_skill` を保存済み。保存結果は `status: saved`、`requires_publish: true`。既存のネットワークと認証設定は変更していない。
-- 開発基盤をcommit `4606de4` に記録し、空だったリモートに `main` を作成して通常push成功。Cloudの作業ブランチ `work` は `origin/main` を追跡。
+- 開発基盤をcommit `4606de4`、ルール・仕様・計画を `f7f2a12` に記録。Cloudの作業ブランチ `work` から、空だったリモートの `main` に通常push成功。同期時は `git push origin HEAD:main` を明示する。
 
 ## 検証記録
 
@@ -24,7 +24,7 @@
 | 同コマンド内の本番ビルド | 成功 |
 | デスクトップChromium E2E | 1件成功 |
 | モバイルChromium E2E | 1件成功 |
-| `npm run dev` + 実Chromium | HTTP 200、React描画、ページ例外なしを確認 |
+| `npm run dev` + 実Chromium | HTTP 200、React描画、ページ例外なし。保存した `start_skill` の確認コマンドも再実行して成功 |
 | ゲーム状態の単体テスト / プレイ一巡E2E | 未実装・未実行。M1で追加 |
 
 E2Eは準備画面の描画、目標の開閉、再読込、横溢れなし、コンソール/ページエラーなしを検証。最初の実行はfaviconの404で2件失敗し、faviconを追加して再実行した結果が上記の2件成功。未解決の必須検証失敗はない。
