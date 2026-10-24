@@ -3,13 +3,14 @@
 ## 公開対象と状態
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
-- 予定URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+- 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 - 公開対象は遊べるMVP。派遣・設備配置・自動合成・販売・研究・セーブを実装しています。
 - Cloud上の単体テスト33件、通常/Pagesパスの実Chromium E2E計24件、型検査・ビルドが成功済みです。
 - 初回はPagesサイト取得404で失敗しましたが、今回の開発着手時点で既存ページのHTTP 200を確認でき、Pages有効化待ちは解消済みです。
-- 最新MVPへの更新と公開確認結果は `PROGRESS.md` に記録します。
+- [MVPの公開実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40077854098) はbuild/deployとも成功。公開HTMLはHTTP 200で、MVPのJSを配信していることを確認しました。
+- 公開配信を既存CAでTLS検証して取得し、Chromiumへ渡す方式でデスクトップ/モバイルの一巡と保存復元を確認。Chromium自身の直接HTTPS経路はCloudプロキシのCA信頼設定で停止したため、直接接続の成功とは扱っていません。詳細は `PROGRESS.md` を参照してください。
 
-## 初回設定（GitHubのWeb画面）
+## 初回設定（設定済み・リポジトリ再作成時の参考）
 
 1. [リポジトリのPages設定](https://github.com/TomofumiYabu/Alcemy-Sim1/settings/pages) を開く。
 2. **Build and deployment → Source → GitHub Actions** を選択する。
@@ -39,7 +40,7 @@ npm run check
 
 Pagesパスだけを検証する場合は `npm run test:e2e:pages`。通常開発は `npm run dev` でルートパスを使用します。Cloudで検証したブラウザーは既存の `/usr/bin/chromium` です。
 
-## 自動設定を妨げている接続制限
+## 初回設定時のAPI接続制限（履歴）
 
 今回、既存認証を使った `gh api repos/TomofumiYabu/Alcemy-Sim1` がGitHubに到達する前に拒否され、HTTPS CONNECTもプロキシから403でした。トークン不足を示すGitHub API応答ではありません。Gitの読み書きは成功しています。
 
