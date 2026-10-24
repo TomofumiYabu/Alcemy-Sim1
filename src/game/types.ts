@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { GRID_CAPACITY, GRID_COLUMNS, GRID_ROWS } from './config';
 
 export const itemIds = [
   'herb',
@@ -37,33 +38,35 @@ const inventorySchema = z.strictObject({
   mana: integer,
 });
 export const stateSchema = z.strictObject({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
+  contentVersion: integer.min(1),
   tick: integer,
   gold: integer,
   knowledge: integer,
   inventory: inventorySchema,
-  research: z.array(z.enum(researchIds)).max(9),
+  research: z.array(z.enum(researchIds)).max(researchIds.length),
   equipment: z
     .array(
       z.strictObject({
         id: integer.min(1),
         kind: z.enum(['cauldron', 'still']),
-        x: integer.max(5),
-        y: integer.max(3),
+        x: integer.max(GRID_COLUMNS - 1),
+        y: integer.max(GRID_ROWS - 1),
         recipe: z.enum(recipeIds),
         enabled: z.boolean(),
         job: z
           .strictObject({
+            contentVersion: integer.min(1),
             recipe: z.enum(recipeIds),
             remaining: integer.min(1),
             total: integer.min(1),
-            knowledge: integer.min(1).max(3),
+            knowledge: integer.min(1),
           })
           .nullable(),
       }),
     )
     .min(1)
-    .max(24),
+    .max(GRID_CAPACITY),
   nextEquipmentId: integer.min(2),
   adventurers: z
     .array(
@@ -73,6 +76,7 @@ export const stateSchema = z.strictObject({
         auto: z.boolean(),
         trip: z
           .strictObject({
+            contentVersion: integer.min(1),
             destination: z.enum(['forest', 'ruins']),
             remaining: integer.min(1),
             total: integer.min(1),

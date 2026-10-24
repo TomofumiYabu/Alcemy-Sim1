@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { SAVE_KEY } from '../../src/persistence/save';
+import { LEGACY_BACKUP_KEY } from '../../src/persistence/save';
+import { readFileSync } from 'node:fs';
 
 async function open(page: Page) {
   await page.clock.install({ time: new Date('2026-10-24T00:00:00Z') });
@@ -79,4 +81,20 @@ test('unavailable Web Locks cannot silently fall back to unprotected writes', as
   await expect(page.getByRole('button', { name: 'イリスを雇う', exact: true })).toBeDisabled();
   await page.clock.fastForward(60_000);
   expect(await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)).toBeNull();
+});
+
+test('the released v1 save is migrated with a backup and its old work continues', async ({ page }) => {
+  const legacy = readFileSync(new URL('../fixtures/v1-inflight.json', import.meta.url), 'utf8');
+  await page.addInitScript(({ key, value }) => { if (localStorage.getItem(key) === null) localStorage.setItem(key, value); }, { key: SAVE_KEY, value: legacy });
+  await open(page);
+  await expect(page.getByRole('button', { name: '今すぐ保存', exact: true })).toBeEnabled();
+  await expect(page.getByTestId('gold')).toHaveText('80');
+  await page.getByRole('button', { name: '今すぐ保存', exact: true }).click();
+  expect((await saved(page)).schemaVersion).toBe(2);
+  expect(await page.evaluate((key) => localStorage.getItem(key), LEGACY_BACKUP_KEY)).toBe(legacy);
+  await page.reload();
+  await expect(page.getByRole('button', { name: '今すぐ保存', exact: true })).toBeEnabled();
+  await page.clock.runFor(5_100);
+  await expect(page.getByTestId('inventory-potion')).toHaveText('1');
+  await expect(page.getByTestId('knowledge')).toHaveText('1');
 });

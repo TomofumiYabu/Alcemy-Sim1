@@ -76,6 +76,7 @@ describe('versioned persistence', () => {
       'job reward inflation',
       (state) => {
         state.equipment[0]!.job = {
+          contentVersion: 1,
           recipe: 'potion',
           total: 80,
           remaining: 40,
@@ -87,6 +88,7 @@ describe('versioned persistence', () => {
       'job duration inflation',
       (state) => {
         state.equipment[0]!.job = {
+          contentVersion: 1,
           recipe: 'potion',
           total: 10,
           remaining: 10,
@@ -98,6 +100,7 @@ describe('versioned persistence', () => {
       'trip without hire',
       (state) => {
         state.adventurers[0]!.trip = {
+          contentVersion: 1,
           destination: 'forest',
           total: 150,
           remaining: 100,
@@ -126,8 +129,8 @@ describe('versioned persistence', () => {
     expect(() =>
       decodeSave(
         encodeSave(createGame()).replace(
-          '"schemaVersion":1',
           '"schemaVersion":2',
+          '"schemaVersion":99',
         ),
       ),
     ).toThrow();

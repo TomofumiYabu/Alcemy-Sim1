@@ -1,6 +1,5 @@
 import {
   adventurerTypes,
-  destinations,
   equipmentTypes,
   recipes,
   research,
@@ -8,20 +7,23 @@ import {
 import {
   createGame,
   emptyInventory,
-  recipeTicks,
   unlocked,
 } from '../game/engine';
-import { itemIds, stateSchema } from '../game/types';
+import { itemIds } from '../game/types';
 import type { GameState } from '../game/types';
+import { CONTENT_VERSION, contentVersions } from '../game/contentVersions';
+import { migrateSave } from './migrate';
 
 export const SAVE_KEY = 'alcemy-sim-save-v1';
+export const LEGACY_BACKUP_KEY = `${SAVE_KEY}-legacy-backup`;
 export type SaveStorage = Pick<Storage, 'getItem' | 'setItem'>;
 export function decodeSave(text: string): GameState {
   if (text.length > 100_000) throw new Error('Save is too large');
-  const state = stateSchema.parse(JSON.parse(text));
+  const state = migrateSave(JSON.parse(text));
   const reject = (condition: boolean) => {
     if (condition) throw new Error('Save has inconsistent game data');
   };
+  reject(!Object.hasOwn(contentVersions, state.contentVersion));
   reject(new Set(state.research).size !== state.research.length);
   for (const id of state.research)
     reject(
@@ -52,21 +54,23 @@ export function decodeSave(text: string): GameState {
     );
     if (entry.job) {
       const job = entry.job;
-      const recipe = recipes[job.recipe];
+      const rules = contentVersions[job.contentVersion];
+      if (!rules) throw new Error('Unknown job content version');
+      const recipe = rules.recipes[job.recipe];
       reject(job.recipe !== entry.recipe || job.remaining > job.total);
       reject(
-        job.total < recipeTicks(state, job.recipe) ||
+        job.total < Math.round(recipe.ticks * (unlocked(state, 'production-3') ? rules.production.final : unlocked(state, 'production-1') ? rules.production.first : 1)) ||
           ![
             recipe.ticks,
-            Math.round(recipe.ticks * 0.9),
-            Math.round(recipe.ticks * 0.8),
+            Math.round(recipe.ticks * rules.production.first),
+            Math.round(recipe.ticks * rules.production.final),
           ].includes(job.total),
       );
       reject(
         job.knowledge !== recipe.knowledge &&
           !(
             unlocked(state, 'knowledge-1') &&
-            job.knowledge === recipe.knowledge + 1
+            job.knowledge === recipe.knowledge + rules.knowledgeBonus
           ),
       );
     }
@@ -80,9 +84,11 @@ export function decodeSave(text: string): GameState {
     reject(entry.auto && !unlocked(state, 'gathering-2'));
     if (entry.trip) {
       const trip = entry.trip;
-      const data = destinations[trip.destination];
+      const rules = contentVersions[trip.contentVersion];
+      if (!rules) throw new Error('Unknown trip content version');
+      const data = rules.destinations[trip.destination];
       reject(
-        !unlocked(state, data.requires) ||
+        (trip.destination === 'ruins' && !unlocked(state, 'gathering-3')) ||
           trip.total !== data.ticks ||
           trip.remaining > trip.total,
       );
@@ -92,7 +98,7 @@ export function decodeSave(text: string): GameState {
           id === 'herb' &&
           trip.destination === 'forest' &&
           unlocked(state, 'gathering-1') &&
-          trip.rewards.herb === 5
+          trip.rewards.herb === (data.rewards.herb ?? 0) + rules.forestBonus
         )
           continue;
         reject(trip.rewards[id] !== expected[id]);
@@ -100,7 +106,7 @@ export function decodeSave(text: string): GameState {
     }
   }
   reject(state.log.some((entry) => entry.tick > state.tick));
-  return state;
+  return { ...state, contentVersion: CONTENT_VERSION };
 }
 export function encodeSave(state: GameState): string {
   return JSON.stringify(state);
@@ -138,6 +144,10 @@ export function saveGame(
   state: GameState,
 ): string | null {
   try {
+    const previous = storage.getItem(SAVE_KEY);
+    let legacy = false;
+    try { legacy = previous !== null && JSON.parse(previous)?.schemaVersion === 1; } catch { /* explicit reset can replace corrupt data */ }
+    if (legacy && storage.getItem(LEGACY_BACKUP_KEY) === null) storage.setItem(LEGACY_BACKUP_KEY, previous!);
     storage.setItem(SAVE_KEY, encodeSave(state));
     return null;
   } catch {

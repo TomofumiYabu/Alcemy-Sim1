@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "tick": 20,
+  "gold": 515,
+  "knowledge": 37,
+  "inventory": {
+    "herb": 2,
+    "water": 1,
+    "crystal": 0,
+    "potion": 0,
+    "extract": 0,
+    "mana": 0
+  },
+  "research": [
+    "gathering-1",
+    "gathering-2",
+    "gathering-3",
+    "production-1",
+    "production-2",
+    "production-3",
+    "knowledge-1",
+    "knowledge-2",
+    "knowledge-3"
+  ],
+  "equipment": [
+    {
+      "id": 1,
+      "kind": "cauldron",
+      "x": 2,
+      "y": 1,
+      "recipe": "potion",
+      "enabled": true,
+      "job": {
+        "recipe": "potion",
+        "remaining": 45,
+        "total": 64,
+        "knowledge": 2
+      }
+    },
+    {
+      "id": 2,
+      "kind": "still",
+      "x": 0,
+      "y": 0,
+      "recipe": "extract",
+      "enabled": true,
+      "job": null
+    }
+  ],
+  "nextEquipmentId": 3,
+  "adventurers": [
+    {
+      "id": "iris",
+      "hired": true,
+      "auto": true,
+      "trip": {
+        "destination": "forest",
+        "remaining": 130,
+        "total": 150,
+        "rewards": {
+          "herb": 5,
+          "water": 2,
+          "crystal": 0,
+          "potion": 0,
+          "extract": 0,
+          "mana": 0
+        }
+      }
+    },
+    {
+      "id": "rowan",
+      "hired": false,
+      "auto": false,
+      "trip": null
+    }
+  ],
+  "stats": {
+    "expeditions": 0,
+    "crafted": 0,
+    "sold": 0,
+    "earned": 0
+  },
+  "log": [
+    {
+      "tick": 0,
+      "message": "蒸留器を配置しました。レシピを選び、自動合成を開始できます。"
+    },
+    {
+      "tick": 0,
+      "message": "イリスをささやきの森へ派遣しました。"
+    },
+    {
+      "tick": 0,
+      "message": "イリスが工房の仲間になりました。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「工房の名声」が完成しました。製品の販売価格 +20%。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「魔力を結ぶ式」が完成しました。魔力薬のレシピを解放。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「観察の手帳」が完成しました。合成で得られる知識 +1。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「淀みなき調合」が完成しました。合成時間を合計20%短縮。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「蒸留の技法」が完成しました。蒸留器と薬草エキスを解放。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「火加減の心得」が完成しました。合成時間を10%短縮。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「月影への地図」が完成しました。魔晶片が採れる遺跡を解放。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「帰り道の約束」が完成しました。冒険者の自動再派遣を解放。"
+    },
+    {
+      "tick": 0,
+      "message": "研究「森の恵み」が完成しました。森で持ち帰る薬草 +1。"
+    },
+    {
+      "tick": 0,
+      "message": "星灯りの工房へようこそ。まずはイリスを雇って、森へ送り出しましょう。"
+    }
+  ]
+}

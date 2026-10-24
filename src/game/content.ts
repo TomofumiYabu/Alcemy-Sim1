@@ -6,6 +6,7 @@ import type {
   RecipeId,
   ResearchId,
 } from './types';
+import { currentRules } from './contentVersions';
 
 export const items: Record<
   ItemId,
@@ -38,24 +39,21 @@ export const recipes: Record<
     name: '傷薬',
     kind: 'cauldron',
     inputs: { herb: 2, water: 1 },
-    ticks: 80,
-    knowledge: 1,
+    ...currentRules.recipes.potion,
     requires: null,
   },
   extract: {
     name: '薬草エキス',
     kind: 'still',
     inputs: { herb: 3 },
-    ticks: 120,
-    knowledge: 1,
+    ...currentRules.recipes.extract,
     requires: 'production-2',
   },
   mana: {
     name: '魔力薬',
     kind: 'cauldron',
     inputs: { extract: 1, crystal: 1, water: 1 },
-    ticks: 200,
-    knowledge: 2,
+    ...currentRules.recipes.mana,
     requires: 'knowledge-2',
   },
 };
@@ -107,14 +105,12 @@ export const destinations: Record<
 > = {
   forest: {
     name: 'ささやきの森',
-    ticks: 150,
-    rewards: { herb: 4, water: 2 },
+    ...currentRules.destinations.forest,
     requires: null,
   },
   ruins: {
     name: '月影の遺跡',
-    ticks: 300,
-    rewards: { crystal: 2, water: 2 },
+    ...currentRules.destinations.ruins,
     requires: 'gathering-3',
   },
 };
