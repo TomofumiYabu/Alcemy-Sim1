@@ -43,7 +43,9 @@ Pages本番ビルド・Cloud Chromium・1366×768・演出ありで、釜12台�
 
 ## Gitと配信
 
-実装commitは `06eaf79`。必須検証後の文書とともに機能ブランチ `codex/ui-delivery` へpushし、納品用PRを作成する。mainへの反映・公開配信・配信後の操作確認は、実際の結果をPROGRESSへ追記する。検証済みブランチと公開済みmainを混同しない。
+実装 `06eaf79`、文書 `2023dbe` を `codex/ui-delivery` へpushし、[納品用PR #3](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/3)を作成済み。mainとの競合なし。
+
+mergeは自動承認レビューが今回のUI-3／UI-4リリース固有の公開許可を求めて拒否した。納品版の実装・検証・資料・PRは完了し、mainへの反映と公開のみ保留している。公開版はUI-2のまま。今回のCI・公開後の配信と実操作は未確認で、準備した公開確認を実行済みとは扱わない。許可後の手順と実際の配信結果はPROGRESSへ記録する。
 
 ## 対象外と確認限界
 
