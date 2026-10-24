@@ -8,6 +8,9 @@
 - `tests/e2e/`: 本番ビルドを実Chromiumで操作するスモークテスト。
 - `scripts/setup.sh`: 書き込み可能なキャッシュを利用する `npm ci` とChromium確認。
 - `package-lock.json`: exact指定した直接依存と推移的依存を固定。導入済みバージョンの正本。
+- `.github/workflows/pages.yml`: mainへのpush/手動実行で検証・Pages公開。Node/npmを固定し、テストで検証した `dist/` だけを配信。第三者Actionは公式リリースのcommit SHAに固定。
+
+通常の開発ではルートパスを使い、Pagesビルドでは `VITE_BASE_PATH=/Alcemy-Sim1/` を指定。`npm run check` は両パスでビルドとE2Eを実行し、最後にPages配信用成果物を残します。公開に必要な権限はdeployジョブだけに付け、初回のPages有効化はリポジトリ設定で行います。
 
 Node.jsはCloudにある24.19.0を `.node-version` に記録。24.x以外は自動採用せず、ツール更新は検証を伴う別変更として行います。npmは11.xを利用します。
 

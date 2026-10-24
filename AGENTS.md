@@ -22,7 +22,8 @@
 
 - Node.jsは `.node-version`、依存関係は `package-lock.json` を基準とする。通常の再セットアップは `npm ci`。依存更新を行うタスク以外では宣言とlockfileを変更しない。
 - npmキャッシュは `.npmrc` により書き込み可能な `.cache/npm` に置く。TLS・パッケージ整合性検証を無効化しない。
-- `npm run dev` で開発起動。必須検証は `npm run check`（型検査・本番ビルド・デスクトップ/モバイルChromium E2E）。CloudのChromiumは `/usr/bin/chromium`、変更時は `CHROMIUM_PATH` で指定する。
+- `npm run dev` で開発起動。必須検証は `npm run check`（型検査・本番ビルド・通常パスとPagesパスそれぞれのデスクトップ/モバイルChromium E2E、計4件）。CloudのChromiumは `/usr/bin/chromium`、変更時は `CHROMIUM_PATH` で指定する。
+- GitHub Pagesの公開パスは `/Alcemy-Sim1/`。`VITE_BASE_PATH` でビルド時に指定する。画像・リンク・ルーティングを追加する際はこのサブパスを壊さない。公開手順は `docs/DEPLOYMENT.md` を参照する。
 - ゲーム状態の実装時にVitestを導入し、素材/通貨不足、同時消費、配置重複、研究前提、保存復元など壊れると困る境界を検証する。実時計待ちに頼る長いテストを避ける。
 - 実行した検証・件数・失敗・未実行を区別して `docs/PROGRESS.md` に記録する。画面が開くこととゲームが遊べることを区別する。
 - Cloudオンボーディングではlocalhostのユーザー向けプレビューリンクを作らない。内部HTTP要求と実ブラウザーで検証する。

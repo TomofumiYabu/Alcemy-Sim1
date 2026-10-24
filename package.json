@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "test": "npm run test:e2e",
     "test:e2e": "npm run build && playwright test",
-    "check": "npm run test:e2e"
+    "test:e2e:pages": "VITE_BASE_PATH=/Alcemy-Sim1/ npm run test:e2e",
+    "check": "npm run test:e2e && npm run test:e2e:pages"
   },
   "dependencies": {
     "react": "19.3.1",
