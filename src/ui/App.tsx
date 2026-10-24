@@ -11,31 +11,38 @@ import { Dialog } from './Dialog';
 import type { Navigate, Screen } from './types';
 import { FeedbackLayer } from './FeedbackLayer';
 import { ItemArtwork } from './Artwork';
+import { Icon } from './Icon';
+import { usePreferences } from './usePreferences';
+import { useFeedbackSound } from './useFeedbackSound';
+import { SettingsControls } from './SettingsControls';
+import type { DestinationId, EquipmentKind } from '../game/types';
 
 const screens = [
-  { id: 'workshop', label: '工房', icon: '♨' },
-  { id: 'expeditions', label: '冒険者', icon: '♧' },
-  { id: 'inventory', label: '在庫・販売', icon: '▤' },
-  { id: 'research', label: '研究', icon: '✧' },
+  { id: 'workshop', label: '工房', icon: 'workshop' },
+  { id: 'expeditions', label: '冒険者', icon: 'adventurers' },
+  { id: 'inventory', label: '在庫・販売', icon: 'inventory' },
+  { id: 'research', label: '研究', icon: 'research' },
 ] as const;
 
 export function App() {
   const game = useGame();
   const { state, send } = game;
-  const [reduceMotion, setReduceMotion] = useState(
-    () => matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
-  useEffect(() => {
-    const query = matchMedia('(prefers-reduced-motion: reduce)');
-    const changed = () => setReduceMotion(query.matches);
-    query.addEventListener('change', changed);
-    return () => query.removeEventListener('change', changed);
-  }, []);
+  const ui = usePreferences();
+  const { preferences, reduceMotion } = ui;
+  const sound = useFeedbackSound(game.feedback, preferences);
+  const feedback = preferences.notifications ? game.feedback : [];
   const recentSale = game.feedback.findLast((event) => event.type === 'sold');
   const [active, setActive] = useState<Screen>('workshop');
   const [resetEpoch, setResetEpoch] = useState(0);
   const [dialog, setDialog] = useState<'settings' | 'journal' | null>(null);
-  const [equipmentRequest, setEquipmentRequest] = useState(0);
+  const [equipmentRequest, setEquipmentRequest] = useState({
+    sequence: 0,
+    kind: undefined as EquipmentKind | undefined,
+  });
+  const [expeditionRequest, setExpeditionRequest] = useState({
+    sequence: 0,
+    destination: 'forest' as DestinationId,
+  });
   const [focusRequest, setFocusRequest] = useState<{
     screen: Screen;
     target: string;
@@ -43,11 +50,30 @@ export function App() {
   const views = useRef<HTMLDivElement>(null);
   const navigate: Navigate = (screen, target) => {
     setActive(screen);
-    if (target === 'equipment') setEquipmentRequest((value) => value + 1);
+    if (target?.startsWith('equipment'))
+      setEquipmentRequest((value) => ({
+        sequence: value.sequence + 1,
+        kind:
+          target === 'equipment:still'
+            ? 'still'
+            : target === 'equipment:cauldron'
+              ? 'cauldron'
+              : undefined,
+      }));
+    if (target?.startsWith('expedition:'))
+      setExpeditionRequest((value) => ({
+        sequence: value.sequence + 1,
+        destination: target === 'expedition:ruins' ? 'ruins' : 'forest',
+      }));
     setFocusRequest({ screen, target: target ?? '' });
   };
   useEffect(() => {
-    if (!focusRequest || focusRequest.target === 'equipment') return;
+    if (
+      !focusRequest ||
+      focusRequest.target.startsWith('equipment') ||
+      focusRequest.target.startsWith('expedition:')
+    )
+      return;
     const view = views.current?.querySelector(`#view-${focusRequest.screen}`);
     const focus = focusRequest.target
       ? view?.querySelector(focusRequest.target)
@@ -62,7 +88,8 @@ export function App() {
       setResetEpoch((value) => value + 1);
       setDialog(null);
       setActive('workshop');
-      setEquipmentRequest(0);
+      setEquipmentRequest({ sequence: 0, kind: undefined });
+      setExpeditionRequest({ sequence: 0, destination: 'forest' });
     }
   };
   const roleMessage =
@@ -122,6 +149,7 @@ export function App() {
           className="settings-button"
           onClick={() => setDialog('settings')}
         >
+          <Icon name="settings" />
           設定
         </button>
       </header>
@@ -169,7 +197,7 @@ export function App() {
                   aria-controls={`view-${screen.id}`}
                   onClick={() => navigate(screen.id)}
                 >
-                  <span aria-hidden="true">{screen.icon}</span>
+                  <Icon name={screen.icon} />
                   <span className="nav-label">{screen.label}</span>
                   <span className="nav-short" aria-hidden="true">
                     {screen.id === 'inventory' ? '在庫' : screen.label}
@@ -191,7 +219,7 @@ export function App() {
                   request={equipmentRequest}
                   navigate={navigate}
                   disabled={game.role !== 'owner'}
-                  feedback={game.feedback}
+                  feedback={feedback}
                 />
               </div>
               <div
@@ -207,7 +235,9 @@ export function App() {
                     key={resetEpoch}
                     state={state}
                     send={send}
-                    feedback={game.feedback}
+                    feedback={feedback}
+                    request={expeditionRequest}
+                    navigate={navigate}
                   />
                 </fieldset>
               </div>
@@ -223,7 +253,7 @@ export function App() {
                   <InventoryPanel
                     state={state}
                     send={send}
-                    feedback={game.feedback}
+                    feedback={feedback}
                   />
                 </fieldset>
               </div>
@@ -236,7 +266,7 @@ export function App() {
                   className="game-controls"
                   disabled={game.role !== 'owner'}
                 >
-                  <ResearchTree state={state} send={send} />
+                  <ResearchTree state={state} send={send} navigate={navigate} />
                 </fieldset>
               </div>
             </main>
@@ -268,7 +298,7 @@ export function App() {
           </div>
         </>
       )}
-      <FeedbackLayer feedback={game.feedback} />
+      <FeedbackLayer feedback={feedback} />
       <Dialog
         open={dialog === 'settings'}
         title="設定とヘルプ"
@@ -283,14 +313,7 @@ export function App() {
         <p>
           工房のマスは矢印キーで移動、Enterで選択・配置、Escapeで配置を取り消せます。
         </p>
-        <label className="checkbox-label motion-setting">
-          <input
-            type="checkbox"
-            checked={reduceMotion}
-            onChange={(event) => setReduceMotion(event.target.checked)}
-          />
-          動きを控えめにする
-        </label>
+        <SettingsControls ui={ui} soundUnavailable={sound.unavailable} />
         <fieldset
           className="game-controls settings-actions"
           disabled={game.role !== 'owner'}

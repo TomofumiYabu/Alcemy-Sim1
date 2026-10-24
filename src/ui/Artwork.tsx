@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import { equipmentTypes, items } from '../game/content';
-import type { Equipment, ItemId } from '../game/types';
+import type {
+  AdventurerId,
+  DestinationId,
+  Equipment,
+  ItemId,
+} from '../game/types';
 import cauldron from '../assets/ui2/cauldron.webp';
 import herb from '../assets/ui2/herb.webp';
 import iris from '../assets/ui2/iris.webp';
 import potion from '../assets/ui2/potion.webp';
 import water from '../assets/ui2/water.webp';
 import workshop from '../assets/ui2/workshop-night.webp';
+import rowan from '../assets/delivery/rowan.webp';
+import still from '../assets/delivery/still.webp';
+import crystal from '../assets/delivery/crystal.webp';
+import extract from '../assets/delivery/extract.webp';
+import mana from '../assets/delivery/mana.webp';
+import forest from '../assets/delivery/forest.webp';
+import ruins from '../assets/delivery/ruins.webp';
 
-const itemArtwork: Partial<Record<ItemId, string>> = { herb, water, potion };
+const itemArtwork: Record<ItemId, string> = {
+  herb,
+  water,
+  potion,
+  crystal,
+  extract,
+  mana,
+};
 
 /** Pictures supplement nearby names and state text; failed images keep a usable fallback. */
 export function Artwork({
@@ -57,32 +76,35 @@ export function ItemArtwork({ item }: { item: ItemId }) {
   );
 }
 export function IrisPortrait({ className = '' }: { className?: string }) {
+  return <CharacterPortrait id="iris" className={className} />;
+}
+export function CharacterPortrait({
+  id,
+  className = '',
+}: {
+  id: AdventurerId;
+  className?: string;
+}) {
   return (
     <Artwork
-      src={iris}
-      fallback="I"
-      name="iris"
-      className={`iris-portrait ${className}`}
+      src={id === 'iris' ? iris : rowan}
+      fallback={id === 'iris' ? 'I' : 'R'}
+      name={id}
+      className={`iris-portrait portrait-${id} ${className}`}
     />
   );
 }
 export function EquipmentArtwork({ equipment }: { equipment: Equipment }) {
-  if (equipment.kind !== 'cauldron')
-    return (
-      <span className="equipment-symbol" aria-hidden="true">
-        {equipmentTypes[equipment.kind].icon}
-      </span>
-    );
   return (
     <span
-      className="cauldron-artwork"
+      className={`equipment-artwork ${equipment.kind}-artwork`}
       data-active={!!equipment.job}
       aria-hidden="true"
     >
       <Artwork
-        src={cauldron}
-        fallback={equipmentTypes.cauldron.icon}
-        name="cauldron"
+        src={equipment.kind === 'cauldron' ? cauldron : still}
+        fallback={equipmentTypes[equipment.kind].icon}
+        name={equipment.kind}
       />
       {equipment.job && (
         <>
@@ -95,6 +117,20 @@ export function EquipmentArtwork({ equipment }: { equipment: Equipment }) {
         </>
       )}
     </span>
+  );
+}
+export function DestinationArtwork({
+  destination,
+}: {
+  destination: DestinationId;
+}) {
+  return (
+    <Artwork
+      src={destination === 'forest' ? forest : ruins}
+      fallback={destination === 'forest' ? '♧' : '◇'}
+      name={destination}
+      className="destination-artwork"
+    />
   );
 }
 export function RoomArtwork() {

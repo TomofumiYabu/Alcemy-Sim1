@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { adventurerTypes, destinations, items } from '../game/content';
 import { getExpeditionPreview, unlocked } from '../game/engine';
 import type { AdventurerId, DestinationId } from '../game/types';
 import { seconds } from './format';
-import type { PanelProps } from './types';
-import { IrisPortrait, ItemArtwork } from './Artwork';
+import type { Navigate, PanelProps } from './types';
+import { CharacterPortrait, DestinationArtwork, ItemArtwork } from './Artwork';
 import type { ItemId } from '../game/types';
 import type { Feedback } from './feedback';
 
@@ -12,13 +12,38 @@ export function ExpeditionPanel({
   state,
   send,
   feedback,
-}: PanelProps & { feedback: Feedback[] }) {
+  request,
+  navigate,
+}: PanelProps & {
+  feedback: Feedback[];
+  request: { sequence: number; destination: DestinationId };
+  navigate: Navigate;
+}) {
   const [destination, setDestination] = useState<
     Record<AdventurerId, DestinationId>
   >({ iris: 'forest', rowan: 'forest' });
+  const lastRequest = useRef(request.sequence);
+  const section = useRef<HTMLElement>(null);
+  const [routeMessage, setRouteMessage] = useState('');
+  useEffect(() => {
+    if (lastRequest.current === request.sequence) return;
+    lastRequest.current = request.sequence;
+    const entry =
+      state.adventurers.find((entry) => entry.hired && !entry.trip) ??
+      state.adventurers.find((entry) => !entry.hired) ??
+      state.adventurers[0]!;
+    setDestination((value) => ({ ...value, [entry.id]: request.destination }));
+    setRouteMessage(
+      `${destinations[request.destination].name}で素材を集められます。${entry.trip ? '帰還後に探索先を選んで派遣してください。' : entry.hired ? '探索先を確認して派遣してください。' : 'まず冒険者を雇いましょう。'}`,
+    );
+    section.current
+      ?.querySelector<HTMLElement>(`[data-testid="adventurer-${entry.id}"]`)
+      ?.focus();
+  }, [request]);
   return (
     <section
       id="expeditions"
+      ref={section}
       className="panel"
       aria-labelledby="expeditions-title"
     >
@@ -34,6 +59,11 @@ export function ExpeditionPanel({
         </span>
       </div>
       <p className="muted">派遣費用は無料。素材は帰還時に自動回収します。</p>
+      {routeMessage && (
+        <p className="message" role="status">
+          {routeMessage}
+        </p>
+      )}
       {state.adventurers.map((entry) => {
         const data = adventurerTypes[entry.id];
         const target =
@@ -46,19 +76,11 @@ export function ExpeditionPanel({
           <article
             className={`adventurer-card ${feedback.some((event) => event.type === 'returned' && event.adventurerId === entry.id) ? 'just-returned' : ''}`}
             key={entry.id}
+            tabIndex={-1}
             data-testid={`adventurer-${entry.id}`}
           >
             <div className="adventurer-heading">
-              {entry.id === 'iris' ? (
-                <IrisPortrait />
-              ) : (
-                <span
-                  className={`portrait portrait-${entry.id}`}
-                  aria-hidden="true"
-                >
-                  {data.initials}
-                </span>
-              )}
+              <CharacterPortrait id={entry.id} />
               <div>
                 <h3>{data.name}</h3>
                 <small>{data.title}</small>
@@ -113,6 +135,10 @@ export function ExpeditionPanel({
                     )}
                   </select>
                 </label>
+                <div className="destination-scene">
+                  <DestinationArtwork destination={target} />
+                  <span>{destinations[target].name}</span>
+                </div>
                 <div className="expedition-reward">
                   {Object.entries(preview.rewards)
                     .filter(([, count]) => count > 0)
@@ -161,15 +187,33 @@ export function ExpeditionPanel({
                     {data.name}の自動再派遣
                   </label>
                 ) : (
-                  <small className="muted">
-                    「帰り道の約束」の研究で自動再派遣
-                  </small>
+                  <button
+                    className="subtle wide"
+                    onClick={() =>
+                      navigate(
+                        'research',
+                        '[data-testid="research-gathering-2"]',
+                      )
+                    }
+                  >
+                    「帰り道の約束」で自動再派遣を解放 →
+                  </button>
                 )}
               </>
             )}
           </article>
         );
       })}
+      {!unlocked(state, 'gathering-3') && (
+        <button
+          className="subtle wide"
+          onClick={() =>
+            navigate('research', '[data-testid="research-gathering-3"]')
+          }
+        >
+          「月影への地図」で遺跡探索を解放 →
+        </button>
+      )}
     </section>
   );
 }

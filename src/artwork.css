@@ -503,13 +503,246 @@
     font-size: 0.875rem;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .cauldron-liquid i {
-    display: none;
-  }
-}
 .brand-mark svg {
   display: block;
   width: 1.75rem;
   height: 1.75rem;
+}
+/* Complete the same visual language across all M1 content. */
+:root {
+  font-size: var(--ui-text-size, 100%);
+}
+.ui-icon {
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
+  vertical-align: -0.25em;
+}
+.navigation .ui-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+.settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.portrait-rowan {
+  background: radial-gradient(ellipse at 50% 20%, #64757d, #263d4a);
+}
+.still-artwork {
+  display: inline-block;
+  position: relative;
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.still-artwork > .artwork {
+  width: 100%;
+  height: 100%;
+}
+.floor-cell > .still-artwork {
+  position: absolute;
+  width: 125%;
+  height: 155%;
+  left: -12.5%;
+  bottom: 0;
+  filter: drop-shadow(0 3px 2px #0007);
+}
+.detail-heading .still-artwork {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+.still-artwork .cauldron-liquid {
+  left: 16%;
+  top: 42%;
+  width: 32%;
+  height: 14%;
+  background: #e4ae4e44;
+  box-shadow: 0 0 10px #efc97366;
+}
+.still-artwork .cauldron-fire {
+  left: 18%;
+  top: 75%;
+  width: 27%;
+  height: 9%;
+}
+.destination-artwork {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #263d3e;
+}
+.destination-artwork img {
+  object-fit: cover;
+  object-position: center 55%;
+}
+.destination-scene {
+  position: relative;
+  height: 7.5rem;
+  margin: 0.7rem 0;
+  border: 1px solid #657c69;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.destination-scene > span:last-child {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  color: #f5e6c2;
+  background: #112727ed;
+}
+.research-branch > h3 {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.research-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.research-name > span {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid #8c805c;
+  border-radius: 50%;
+  color: #efd49a;
+}
+.research-name h4 {
+  margin: 0;
+}
+.research-example {
+  color: #d7e1c7;
+  background: #102726;
+  padding: 0.5rem;
+  border-radius: 5px;
+}
+.research-prerequisites {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+}
+.prerequisite-link {
+  text-align: left;
+  font-size: 0.875rem;
+  background: #1b3532;
+  color: #e7debc;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.4rem 0.5rem;
+}
+.research-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 0.65rem 0;
+  color: #f1dbac;
+}
+.research-deficit {
+  display: block;
+  color: #f0c6ab;
+  margin: 0.4rem 0;
+}
+.research-card.research-highlighted {
+  border-color: #dfc489;
+}
+.research-card:focus-visible,
+.adventurer-card:focus-visible {
+  outline: 3px solid #eacb83;
+  outline-offset: 3px;
+}
+.research-unlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-height: 5rem;
+  padding: 0.4rem;
+  border-radius: 6px;
+  background: #102827;
+}
+.research-unlock .destination-artwork {
+  height: 6rem;
+}
+.research-unlock .equipment-artwork {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+.research-unlock
+  > span:not(.equipment-artwork):not(.item-artwork):not(.destination-artwork) {
+  text-align: center;
+  font-size: 0.875rem;
+}
+.research-unlock .item-artwork {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.material-shortages {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.material-shortages > div {
+  padding: 0.4rem;
+  border: 1px solid #687d62;
+  border-radius: 6px;
+  background: #1b332e;
+}
+.material-shortages small {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #f1d9b4;
+}
+.material-shortages .item-artwork {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.material-shortages button {
+  font-size: 0.875rem;
+  text-align: left;
+}
+.display-settings {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.display-settings h3 {
+  margin: 0.5rem 0 0;
+}
+.volume-setting {
+  display: grid;
+  gap: 0.25rem;
+}
+.volume-setting input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: #d6bd7f;
+}
+.material-shortages > small {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.intermediate-note {
+  color: #e8d7af;
+}
+@media (max-width: 740px) {
+  .settings-button .ui-icon {
+    display: none;
+  }
+  .settings-button {
+    white-space: nowrap;
+  }
 }
