@@ -9,6 +9,8 @@ import { ResearchTree } from './ResearchTree';
 import { QuestProgress } from './QuestProgress';
 import { Dialog } from './Dialog';
 import type { Navigate, Screen } from './types';
+import { FeedbackLayer } from './FeedbackLayer';
+import { ItemArtwork } from './Artwork';
 
 const screens = [
   { id: 'workshop', label: '工房', icon: '♨' },
@@ -20,6 +22,16 @@ const screens = [
 export function App() {
   const game = useGame();
   const { state, send } = game;
+  const [reduceMotion, setReduceMotion] = useState(
+    () => matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  useEffect(() => {
+    const query = matchMedia('(prefers-reduced-motion: reduce)');
+    const changed = () => setReduceMotion(query.matches);
+    query.addEventListener('change', changed);
+    return () => query.removeEventListener('change', changed);
+  }, []);
+  const recentSale = game.feedback.findLast((event) => event.type === 'sold');
   const [active, setActive] = useState<Screen>('workshop');
   const [resetEpoch, setResetEpoch] = useState(0);
   const [dialog, setDialog] = useState<'settings' | 'journal' | null>(null);
@@ -70,18 +82,33 @@ export function App() {
     (entry) => entry.enabled && !entry.job,
   ).length;
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-motion={reduceMotion ? 'reduced' : 'full'}>
       <header className="topbar">
         <h1 className="brand">
           <span className="brand-mark" aria-hidden="true">
-            ⚗︎
+            <svg
+              viewBox="0 0 32 32"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            >
+              <circle cx="16" cy="16" r="12" />
+              <path d="m16 1 3 12 12 3-12 3-3 12-3-12L1 16l12-3Z" />
+              <path d="m6 6 20 20M26 6 6 26" />
+            </svg>
           </span>
           星灯りの錬金工房
         </h1>
         <div className="resources">
           <div className="resource">
             <small>金貨</small>
-            <strong data-testid="gold">{number(state.gold)}</strong>
+            <strong
+              data-testid="gold"
+              className={recentSale ? 'resource-gain' : ''}
+              key={recentSale?.id ?? 0}
+            >
+              {number(state.gold)}
+            </strong>
           </div>
           <div className="resource">
             <small>知識</small>
@@ -164,6 +191,7 @@ export function App() {
                   request={equipmentRequest}
                   navigate={navigate}
                   disabled={game.role !== 'owner'}
+                  feedback={game.feedback}
                 />
               </div>
               <div
@@ -175,7 +203,12 @@ export function App() {
                   className="game-controls"
                   disabled={game.role !== 'owner'}
                 >
-                  <ExpeditionPanel key={resetEpoch} state={state} send={send} />
+                  <ExpeditionPanel
+                    key={resetEpoch}
+                    state={state}
+                    send={send}
+                    feedback={game.feedback}
+                  />
                 </fieldset>
               </div>
               <div
@@ -187,7 +220,11 @@ export function App() {
                   className="game-controls"
                   disabled={game.role !== 'owner'}
                 >
-                  <InventoryPanel state={state} send={send} />
+                  <InventoryPanel
+                    state={state}
+                    send={send}
+                    feedback={game.feedback}
+                  />
                 </fieldset>
               </div>
               <div
@@ -218,9 +255,11 @@ export function App() {
               className="subtle stock-summary"
               onClick={() => navigate('inventory')}
             >
-              薬草 {number(state.inventory.herb)} · 清水{' '}
-              {number(state.inventory.water)} · 傷薬{' '}
-              {number(state.inventory.potion)}
+              <ItemArtwork item="herb" />
+              薬草 {number(state.inventory.herb)} · <ItemArtwork item="water" />
+              清水 {number(state.inventory.water)} ·{' '}
+              <ItemArtwork item="potion" />
+              傷薬 {number(state.inventory.potion)}
             </button>
             <p className="latest-result">{state.log[0]?.message}</p>
             <button className="subtle" onClick={() => setDialog('journal')}>
@@ -229,6 +268,7 @@ export function App() {
           </div>
         </>
       )}
+      <FeedbackLayer feedback={game.feedback} />
       <Dialog
         open={dialog === 'settings'}
         title="設定とヘルプ"
@@ -243,6 +283,14 @@ export function App() {
         <p>
           工房のマスは矢印キーで移動、Enterで選択・配置、Escapeで配置を取り消せます。
         </p>
+        <label className="checkbox-label motion-setting">
+          <input
+            type="checkbox"
+            checked={reduceMotion}
+            onChange={(event) => setReduceMotion(event.target.checked)}
+          />
+          動きを控えめにする
+        </label>
         <fieldset
           className="game-controls settings-actions"
           disabled={game.role !== 'owner'}

@@ -4,8 +4,14 @@ import { itemIds } from '../game/types';
 import type { RecipeId } from '../game/types';
 import { number } from './format';
 import type { PanelProps } from './types';
+import { ItemArtwork } from './Artwork';
+import type { Feedback } from './feedback';
 
-export function InventoryPanel({ state, send }: PanelProps) {
+export function InventoryPanel({
+  state,
+  send,
+  feedback,
+}: PanelProps & { feedback: Feedback[] }) {
   return (
     <section id="inventory" className="panel" aria-labelledby="inventory-title">
       <div className="panel-heading">
@@ -20,9 +26,12 @@ export function InventoryPanel({ state, send }: PanelProps) {
       <p className="muted">素材は工房で共有。製品を売ると金貨になります。</p>
       <div className="inventory-list">
         {itemIds.map((id) => (
-          <div className={`inventory-row item-${id}`} key={id}>
+          <div
+            className={`inventory-row item-${id} ${feedback.some((event) => (event.type === 'crafted' && event.item === id) || (event.type === 'returned' && event.rewards[id] > 0)) ? 'inventory-gain' : ''}`}
+            key={id}
+          >
             <span className="item-icon" aria-hidden="true">
-              {items[id].icon}
+              <ItemArtwork item={id} />
             </span>
             <div className="item-name">
               <strong>{items[id].name}</strong>

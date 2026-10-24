@@ -8,6 +8,9 @@ import { EquipmentDetail } from './EquipmentDetail';
 import { Dialog } from './Dialog';
 import { useCompactLayout } from './useCompactLayout';
 import type { Navigate, PanelProps } from './types';
+import { EquipmentArtwork, ItemArtwork, RoomArtwork } from './Artwork';
+import { AdventureBrief } from './AdventureBrief';
+import type { Feedback } from './feedback';
 
 type Placement =
   | { type: 'buy'; kind: EquipmentKind }
@@ -20,11 +23,13 @@ export function WorkshopPanel({
   request,
   navigate,
   disabled,
+  feedback,
 }: PanelProps & {
   active: boolean;
   request: number;
   navigate: Navigate;
   disabled: boolean;
+  feedback: Feedback[];
 }) {
   const [selected, setSelected] = useState(() => state.equipment[0]!.id);
   const [placement, setPlacement] = useState<Placement>(null);
@@ -162,7 +167,11 @@ export function WorkshopPanel({
             <button onClick={cancel}>配置をキャンセル</button>
           </div>
         )}
-        <div className="floor-viewport" aria-label="工房の配置エリア">
+        <div
+          className={`floor-viewport workshop-room ${placement ? 'placing' : ''}`}
+          aria-label="工房の配置エリア"
+        >
+          <RoomArtwork />
           <div
             className="workshop-floor"
             ref={floor}
@@ -186,6 +195,14 @@ export function WorkshopPanel({
                 : entry?.enabled
                   ? '素材待ち'
                   : '停止中';
+              const celebration =
+                entry?.id === equipment.id
+                  ? feedback.findLast(
+                      (event) =>
+                        event.type === 'crafted' &&
+                        !!event.equipment[entry!.id],
+                    )
+                  : undefined;
               return (
                 <button
                   key={index}
@@ -224,12 +241,9 @@ export function WorkshopPanel({
                 >
                   {entry ? (
                     <>
-                      <span
-                        aria-hidden="true"
-                        className={`equipment-icon ${entry.job ? 'working' : ''}`}
-                      >
-                        {equipmentTypes[entry.kind].icon}
-                        <span className="equipment-number">{entry.id}</span>
+                      <EquipmentArtwork equipment={entry} />
+                      <span className="equipment-number" aria-hidden="true">
+                        {entry.id}
                       </span>
                       <span className="cell-name">
                         {equipmentTypes[entry.kind].name}
@@ -243,6 +257,16 @@ export function WorkshopPanel({
                           value={entry.job.total - entry.job.remaining}
                           aria-label={`設備${entry.id}の進捗`}
                         />
+                      )}
+                      {celebration?.type === 'crafted' && (
+                        <span
+                          className="craft-pop"
+                          key={celebration.id}
+                          aria-hidden="true"
+                        >
+                          <ItemArtwork item={celebration.item} />+
+                          {celebration.equipment[entry.id]}
+                        </span>
                       )}
                     </>
                   ) : (
@@ -286,14 +310,23 @@ export function WorkshopPanel({
         </fieldset>
       </div>
       {compact ? (
-        <Dialog
-          open={sheet && active}
-          title="設備の詳細"
-          sheet
-          onClose={() => setSheet(false)}
-        >
-          {details}
-        </Dialog>
+        <>
+          <div className="brief-mobile">
+            <AdventureBrief
+              state={state}
+              navigate={navigate}
+              feedback={feedback}
+            />
+          </div>
+          <Dialog
+            open={sheet && active}
+            title="設備の詳細"
+            sheet
+            onClose={() => setSheet(false)}
+          >
+            {details}
+          </Dialog>
+        </>
       ) : (
         <aside
           className="panel equipment-sidebar"
@@ -301,6 +334,11 @@ export function WorkshopPanel({
           ref={detail}
         >
           {details}
+          <AdventureBrief
+            state={state}
+            navigate={navigate}
+            feedback={feedback}
+          />
         </aside>
       )}
     </section>

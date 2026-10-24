@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  advanceTicks,
+  advanceWithEvents,
   applyCommand,
   createGame,
   TICK_MS,
@@ -9,8 +9,10 @@ import type { Command, GameState } from '../game/types';
 import { loadGame, SAVE_KEY, saveGame } from '../persistence/save';
 import { createSaveSession } from '../persistence/session';
 import type { SaveSession, SessionRole } from '../persistence/session';
+import { useFeedback } from './useFeedback';
 
 export function useGame() {
+  const { feedback, publishFeedback, clearFeedback } = useFeedback();
   const [initial] = useState(() => {
     try {
       return loadGame(window.localStorage);
@@ -49,6 +51,7 @@ export function useGame() {
   }, []);
   useEffect(() => {
     const reload = () => {
+      clearFeedback();
       let loaded;
       try {
         loaded = loadGame(window.localStorage);
@@ -76,6 +79,7 @@ export function useGame() {
       session.current = createSaveSession(locks, reload, setRole);
     };
     const leave = () => {
+      clearFeedback();
       persist(current.current);
       session.current?.dispose();
       session.current = null;
@@ -94,7 +98,7 @@ export function useGame() {
       window.removeEventListener('storage', changed);
       leave();
     };
-  }, [update, persist]);
+  }, [update, persist, clearFeedback]);
   const send = useCallback(
     (command: Command) => {
       if (blockedRef.current || !session.current?.isOwner()) return false;
@@ -103,16 +107,18 @@ export function useGame() {
       if (!result.error) {
         update(result.state);
         persist(result.state);
+        publishFeedback(result.events);
       }
       return result.error === null;
     },
-    [blocked, update, persist],
+    [blocked, update, persist, publishFeedback],
   );
   useEffect(() => {
     if (blocked || role !== 'owner') return;
     let last = performance.now();
     let remainder = 0;
     const resetClock = () => {
+      if (document.hidden) clearFeedback();
       last = performance.now();
       remainder = 0;
       persist(current.current);
@@ -129,7 +135,9 @@ export function useGame() {
       const ticks = Math.floor(remainder / TICK_MS);
       if (ticks > 0) {
         remainder -= ticks * TICK_MS;
-        update(advanceTicks(current.current, ticks));
+        const result = advanceWithEvents(current.current, ticks);
+        update(result.state);
+        publishFeedback(result.events);
       }
     }, TICK_MS);
     const autosave = window.setInterval(() => persist(current.current), 5_000);
@@ -139,12 +147,13 @@ export function useGame() {
       window.clearInterval(autosave);
       document.removeEventListener('visibilitychange', resetClock);
     };
-  }, [blocked, role, update, persist]);
+  }, [blocked, role, update, persist, publishFeedback, clearFeedback]);
   const reset = () => {
     if (!session.current?.isOwner()) return false;
     if (!window.confirm('工房の進行を初期化します。よろしいですか？'))
       return false;
     const next = createGame();
+    clearFeedback();
     update(next);
     blockedRef.current = false;
     setBlocked(false);
@@ -159,6 +168,7 @@ export function useGame() {
     saveError,
     notice,
     saved,
+    feedback,
     send,
     reset,
     save: () => persist(current.current),

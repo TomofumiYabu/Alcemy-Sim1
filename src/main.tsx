@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import './style.css';
+import './artwork.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Application root element is missing.');

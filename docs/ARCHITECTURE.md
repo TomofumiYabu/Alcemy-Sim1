@@ -7,7 +7,11 @@
 - `src/ui/App.tsx`: 常設HUD、4画面の切替、案内からのフォーカス移動、設定・記録の統合。`useGame`はここで1回だけ起動し、画面切替でも保持する。
 - `src/ui/WorkshopPanel.tsx`: 設備選択、購入・移動モード、roving tabindexと矢印によるマス移動。PCは右側の詳細、1000px以下は詳細シートへ切り替える。
 - `src/ui/Dialog.tsx` / `useCompactLayout.ts`: native dialogのフォーカス制限・Escape・復帰と、CSSに合わせた詳細表示の切替。ゲーム変更の無効化をシートの閉じる操作から分ける。
-- `src/ui/useGame.ts`: ゲーム状態と実時計、自動保存、可視性変更の接続。
+- `src/ui/useGame.ts`: ゲーム状態と実時計、自動保存、可視性変更の接続。一時イベントを表示層へ渡す。
+- `src/game/events.ts` / `engine.ts`: 完成・帰還・販売・研究の構造化イベント。状態遷移と同時に確定し、保存データや日本語ログとは分離する。
+- `src/ui/feedback.ts` / `useFeedback.ts` / `FeedbackLayer.tsx`: 同時完成の集約、最大2通知の表示、寿命管理と再読込・所有権変更時の消去。
+- `src/ui/Artwork.tsx` / `AdventureBrief.tsx`: 分離した製品アート、稼働時だけの炉光・泡、画像失敗時の代替表示と冒険者要約。
+- `src/artwork.css` / `src/assets/ui2/`: 画面構成のCSSから分離したアート・演出。画像はVite importで配信し、制作元とハッシュは素材READMEに記録。
 - `src/style.css`: 青緑・真鍮の配色、PCの左ナビと2列工房、モバイルの下部ナビと詳細シート、本文16px・補足14px・44px操作領域、文字拡大時の再配置。
 - `src/game/`: データ・コマンド・固定tickのシミュレーション。
 - `src/persistence/save.ts`: 移行後の検証、読み書き、旧JSONのバックアップと復旧。
@@ -48,7 +52,7 @@ MVPはReact標準の状態管理と純粋関数で構成し、外部状態管理
 ## 不変条件
 
 - `GameState` が唯一の正本。UI内に通貨や在庫の別コピーを持たない。
-- `applyCommand(state, command)` は次状態とエラーを返し、失敗時は元状態をそのまま返す。`advanceTicks(state, count)` は次状態を返す。いずれも入力を変更せず、DOM、localStorage、現在時刻を直接参照しない。
+- `applyCommand(state, command)` は次状態・エラー・一時イベントを返し、失敗時は元状態と空イベントを返す。`advanceWithEvents(state, count)` は次状態とイベント、互換APIの`advanceTicks(state, count)`は次状態だけを返す。いずれも入力を変更せず、DOM、localStorage、現在時刻を直接参照しない。
 - 副作用は外側から接続する。現MVPの報酬は確定値。乱数を導入する場合はseed付き生成器を注入する。
 - 計算順序は仕様に従い固定する。tickのまとめ方を変えても同一結果になることをテストする。
 - 合成中ジョブは確保済み材料・残時間・完了品を保持。研究で既存ジョブを巻き戻さない。
@@ -61,6 +65,8 @@ localStorageにはschemaVersion 2とcontentVersion、ゲーム状態を保存し
 保存・初期化と時計はWeb Locksの所有タブだけで動かします。所有権を取得したら最新データを読み直し、離脱時は保存後に解放します。待機中タブはstorage通知で表示を更新します。
 
 画面の選択、配置モード、探索先、スクロール位置はUI内で保持し、セーブ形式には加えません。各パネルは非表示になっても保持し、進行と保存は画面切替から独立させます。
+
+演出イベントはGameStateへ入れず、実処理の戻り値からUIへ渡します。読み込みから過去ログを再生せず、ページ非表示・初期化・所有権取得時に一時表示を消します。演出軽減時は静的な結果と状態を保持します。
 
 合成と派遣の表示プレビューはジョブ生成と同じ関数を使います。数値を変更する場合は履歴エントリを追加してCONTENT_VERSIONを進めます。既存エントリを編集すると旧セーブの契約を壊すため禁止です。固定v1 fixtureと現行定義/履歴の一致テストを維持します。
 
