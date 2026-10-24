@@ -1,0 +1,515 @@
+/* UI-2: separate room, equipment and character art from live controls. */
+.artwork {
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+  line-height: 1;
+  pointer-events: none;
+}
+.artwork img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.artwork-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.7rem;
+  color: var(--gold);
+}
+.item-artwork {
+  width: 3rem;
+  height: 3rem;
+  vertical-align: middle;
+}
+.item-icon {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border-color: #687958;
+}
+.item-icon .item-artwork {
+  width: 100%;
+  height: 100%;
+}
+.iris-portrait {
+  width: 6rem;
+  height: 6rem;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 20%, #596653, #253e35);
+  border: 1px solid #a28c59;
+  border-radius: 45% 45% 8px 8px;
+}
+.iris-portrait img {
+  object-fit: cover;
+  object-position: 50% 15%;
+}
+.workshop-main {
+  background: #162b2c;
+}
+.workshop-main .eyebrow {
+  display: none;
+}
+.workshop-room {
+  position: relative;
+  isolation: isolate;
+  padding: 16% 0.75rem 0.9rem;
+  border: 1px solid #7b7559;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  background: #26352f;
+  box-shadow: inset 0 0 40px #06171799;
+}
+.room-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(#163344 0 30%, #675a42 31%, #3f4337 100%);
+  pointer-events: none;
+}
+.room-backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+}
+.workshop-room .workshop-floor {
+  position: relative;
+  width: min(80%, 32rem);
+  min-width: 300px;
+  padding: 6px;
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid transparent;
+}
+.workshop-room .floor-cell,
+.workshop-room .floor-cell:nth-child(even) {
+  aspect-ratio: 1.4;
+  min-height: 44px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #ddd4b755;
+}
+.workshop-room .floor-cell:hover:not(:disabled),
+.workshop-room .floor-cell:focus-visible {
+  background: #d8b66e22;
+  border-color: #f1d699;
+}
+.workshop-room .floor-cell.selected {
+  border: 2px solid #e9c477;
+  background: #dec67c22;
+  box-shadow:
+    0 0 12px #e2ad4633,
+    inset 0 0 8px #f4cc7444;
+}
+.workshop-room.placing .floor-cell {
+  border-color: #c9c6a566;
+  background: #122c2a33;
+}
+.workshop-room.placing .floor-cell.placeable {
+  border-style: dashed;
+  color: #f0d69c;
+}
+.workshop-room .cell-name {
+  display: none;
+}
+.workshop-room .equipment-number {
+  position: absolute;
+  top: 0;
+  right: 0.15rem;
+  z-index: 3;
+  font-size: 0.875rem;
+  color: #fff0c7;
+  text-shadow: 0 1px 3px #000;
+}
+.workshop-room .cell-status {
+  position: absolute;
+  bottom: -0.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  padding: 0.1rem 0.35rem;
+  z-index: 3;
+  border: 1px solid #a18a58;
+  border-radius: 6px;
+  background: #162727e8;
+  color: #eee4c9;
+  pointer-events: none;
+  display: none;
+}
+.workshop-room .selected .cell-status,
+.workshop-room .floor-cell:hover .cell-status {
+  display: block;
+}
+.workshop-room .floor-cell progress {
+  position: absolute;
+  bottom: 0.05rem;
+  width: 74%;
+  z-index: 2;
+}
+.cauldron-artwork {
+  display: inline-block;
+  position: relative;
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.cauldron-artwork > .artwork {
+  width: 100%;
+  height: 100%;
+}
+.floor-cell > .cauldron-artwork {
+  position: absolute;
+  width: 125%;
+  height: 155%;
+  left: -12.5%;
+  bottom: 0;
+  filter: drop-shadow(0 3px 2px #0007);
+}
+.equipment-symbol {
+  font-size: 2rem;
+  color: #f0d79b;
+}
+.cauldron-liquid {
+  position: absolute;
+  left: 22%;
+  top: 20%;
+  width: 56%;
+  height: 11%;
+  border-radius: 50%;
+  background: #55dfbf77;
+  box-shadow: 0 0 12px #76e8d088;
+  mix-blend-mode: screen;
+}
+.cauldron-liquid i {
+  position: absolute;
+  left: 24%;
+  bottom: 20%;
+  width: 4px;
+  height: 4px;
+  border: 1px solid #c5fff0;
+  border-radius: 50%;
+  animation: brew-bubble 1.8s ease-out infinite;
+}
+.cauldron-liquid i:nth-child(2) {
+  left: 55%;
+  animation-delay: -0.6s;
+}
+.cauldron-liquid i:nth-child(3) {
+  left: 75%;
+  animation-delay: -1.2s;
+}
+.cauldron-fire {
+  position: absolute;
+  left: 38%;
+  top: 72%;
+  width: 25%;
+  height: 12%;
+  border-radius: 50% 50% 35% 35%;
+  background: radial-gradient(
+    ellipse at 50% 70%,
+    #ffe8ac,
+    #ffbe5588 45%,
+    #c56d1e11 72%
+  );
+  box-shadow: 0 0 8px #ffb74e99;
+  animation: hearth-glow 1.6s ease-in-out infinite alternate;
+}
+.detail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.equipment-sidebar {
+  padding: 0.75rem 0.9rem;
+}
+.detail-heading .cauldron-artwork {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+.recipe-formula {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.35rem;
+  background: #112727;
+  border: 1px solid #425b4d;
+  border-radius: 7px;
+}
+.recipe-ingredient {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 3.3rem;
+  flex: 1;
+}
+.recipe-formula .recipe-ingredient > span {
+  font-size: 0.875rem;
+  color: #eee4cf;
+  margin: 0;
+  white-space: nowrap;
+}
+.recipe-ingredient .item-artwork {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.recipe-formula .recipe-arrow {
+  margin: 0;
+  flex: 0;
+}
+.expedition-reward {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  margin: 0.75rem 0;
+}
+.reward-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #e5e7cc;
+}
+.reward-item .item-artwork {
+  width: 2rem;
+  height: 2rem;
+}
+.adventure-brief {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  padding: 0.4rem;
+  width: 100%;
+  border-color: #7a7653;
+  background: linear-gradient(110deg, #344837, #152f32);
+  text-align: left;
+}
+.adventure-brief .iris-portrait {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 6px;
+}
+.adventure-brief > span:nth-child(2) {
+  flex: 1;
+}
+.adventure-brief strong,
+.adventure-brief small {
+  display: block;
+}
+.adventure-brief strong {
+  color: #f2d59d;
+}
+.brief-mobile {
+  margin-top: 0.75rem;
+}
+.brief-mobile .adventure-brief {
+  margin: 0;
+}
+.stock-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.stock-summary .item-artwork {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.feedback-feed {
+  position: fixed;
+  z-index: 5;
+  right: 1.1rem;
+  bottom: 4.4rem;
+  width: min(23rem, calc(100% - 2.2rem));
+  display: grid;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+.feedback-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #bca16b;
+  border-left: 3px solid #d6bb80;
+  border-radius: 8px;
+  background: #152e2bf5;
+  box-shadow: 0 7px 24px #0005;
+  animation: feedback-enter 0.28s ease-out both;
+}
+.feedback-card strong,
+.feedback-card small {
+  display: block;
+}
+.feedback-card strong {
+  font-weight: 600;
+  color: #f3db9f;
+}
+.feedback-card .item-artwork,
+.feedback-card .iris-portrait {
+  width: 2.7rem;
+  height: 2.7rem;
+}
+.feedback-card .iris-portrait {
+  border-radius: 50%;
+}
+.feedback-symbol {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  font-size: 2rem;
+  color: var(--gold);
+}
+.feedback-returned {
+  border-color: #87bca2;
+}
+.feedback-sold {
+  border-left-color: #e4bf68;
+}
+.craft-pop {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: -2.5rem;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  background: #18362ded;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #a4c9a5;
+  border-radius: 5px;
+  color: #f6e6b5;
+  pointer-events: none;
+  animation: craft-lift 0.7s ease-out both;
+}
+.craft-pop .item-artwork {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.resource-gain {
+  animation: resource-gain 0.75s ease-out;
+}
+.inventory-gain .item-count {
+  animation: resource-gain 0.75s ease-out;
+}
+.just-returned {
+  animation: return-glow 0.8s ease-out;
+}
+@keyframes brew-bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.7);
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1.2);
+  }
+}
+@keyframes hearth-glow {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes feedback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes craft-lift {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes resource-gain {
+  30% {
+    color: #fff2bb;
+    text-shadow: 0 0 14px #f5d781;
+  }
+}
+@keyframes return-glow {
+  30% {
+    box-shadow:
+      0 0 0 2px #c4d9a2,
+      0 0 18px #a4bc6855;
+  }
+}
+.app-shell[data-motion='reduced'] *,
+.app-shell[data-motion='reduced'] *::before,
+.app-shell[data-motion='reduced'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.app-shell[data-motion='reduced'] .cauldron-liquid i {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .activity-bar .stock-summary {
+    display: none;
+  }
+}
+@media (max-width: 740px) {
+  .workshop-room {
+    padding-top: 26%;
+  }
+  .workshop-room .workshop-floor {
+    width: 100%;
+  }
+  .workshop-room .selected .cell-status,
+  .workshop-room .floor-cell:hover .cell-status {
+    display: none;
+  }
+  .iris-portrait {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+  .feedback-feed {
+    bottom: calc(7.8rem + env(safe-area-inset-bottom));
+    right: 0.65rem;
+    width: min(23rem, calc(100% - 1.3rem));
+  }
+  .feedback-card {
+    padding: 0.5rem 0.65rem;
+  }
+  .feedback-card strong {
+    font-size: 0.875rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cauldron-liquid i {
+    display: none;
+  }
+}
+.brand-mark svg {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+}

@@ -4,8 +4,15 @@ import { getExpeditionPreview, unlocked } from '../game/engine';
 import type { AdventurerId, DestinationId } from '../game/types';
 import { seconds } from './format';
 import type { PanelProps } from './types';
+import { IrisPortrait, ItemArtwork } from './Artwork';
+import type { ItemId } from '../game/types';
+import type { Feedback } from './feedback';
 
-export function ExpeditionPanel({ state, send }: PanelProps) {
+export function ExpeditionPanel({
+  state,
+  send,
+  feedback,
+}: PanelProps & { feedback: Feedback[] }) {
   const [destination, setDestination] = useState<
     Record<AdventurerId, DestinationId>
   >({ iris: 'forest', rowan: 'forest' });
@@ -37,17 +44,21 @@ export function ExpeditionPanel({ state, send }: PanelProps) {
         const preview = entry.trip ?? getExpeditionPreview(state, target);
         return (
           <article
-            className="adventurer-card"
+            className={`adventurer-card ${feedback.some((event) => event.type === 'returned' && event.adventurerId === entry.id) ? 'just-returned' : ''}`}
             key={entry.id}
             data-testid={`adventurer-${entry.id}`}
           >
             <div className="adventurer-heading">
-              <span
-                className={`portrait portrait-${entry.id}`}
-                aria-hidden="true"
-              >
-                {data.initials}
-              </span>
+              {entry.id === 'iris' ? (
+                <IrisPortrait />
+              ) : (
+                <span
+                  className={`portrait portrait-${entry.id}`}
+                  aria-hidden="true"
+                >
+                  {data.initials}
+                </span>
+              )}
               <div>
                 <h3>{data.name}</h3>
                 <small>{data.title}</small>
@@ -102,16 +113,17 @@ export function ExpeditionPanel({ state, send }: PanelProps) {
                     )}
                   </select>
                 </label>
-                <p className="expedition-reward">
+                <div className="expedition-reward">
                   {Object.entries(preview.rewards)
                     .filter(([, count]) => count > 0)
-                    .map(
-                      ([id, count]) =>
-                        `${items[id as keyof typeof items].name} +${count}`,
-                    )
-                    .join(' / ')}{' '}
-                  <span>· {seconds(preview.total)}</span>
-                </p>
+                    .map(([id, count]) => (
+                      <span className="reward-item" key={id}>
+                        <ItemArtwork item={id as ItemId} />
+                        {items[id as ItemId].name} +{count}
+                      </span>
+                    ))}
+                  <span>所要 {seconds(preview.total)}</span>
+                </div>
                 {entry.trip && (
                   <>
                     <progress

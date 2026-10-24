@@ -10,6 +10,8 @@ import { recipeIds } from '../game/types';
 import type { Equipment, RecipeId } from '../game/types';
 import { seconds } from './format';
 import type { Navigate, PanelProps } from './types';
+import { EquipmentArtwork, ItemArtwork } from './Artwork';
+import type { ItemId } from '../game/types';
 
 export function EquipmentDetail({
   state,
@@ -38,6 +40,7 @@ export function EquipmentDetail({
         <h3>
           {equipmentTypes[equipment.kind].name} <span>#{equipment.id}</span>
         </h3>
+        <EquipmentArtwork equipment={equipment} />
       </div>
       <label className="select-label">
         合成するレシピ
@@ -67,15 +70,23 @@ export function EquipmentDetail({
             ))}
         </select>
       </label>
-      <p className="recipe-formula">
-        {Object.entries(recipes[equipment.recipe].inputs)
-          .map(
-            ([id, count]) =>
-              `${items[id as keyof typeof items].name} ×${count}`,
-          )
-          .join(' ＋ ')}{' '}
-        <span>→</span> {recipes[equipment.recipe].name} ×1
-      </p>
+      <div className="recipe-formula">
+        {Object.entries(recipes[equipment.recipe].inputs).map(([id, count]) => (
+          <span className="recipe-ingredient" key={id}>
+            <ItemArtwork item={id as ItemId} />
+            <span>
+              {items[id as ItemId].name} ×{count}
+            </span>
+          </span>
+        ))}
+        <span className="recipe-arrow" aria-hidden="true">
+          →
+        </span>
+        <span className="recipe-ingredient">
+          <ItemArtwork item={equipment.recipe} />
+          <span>{recipes[equipment.recipe].name} ×1</span>
+        </span>
+      </div>
       <div className="production-meta">
         <span>
           ◷{' '}
@@ -99,9 +110,7 @@ export function EquipmentDetail({
             {equipment.job.total !== recipeTicks(state, equipment.recipe) &&
               '（開始時の速度）'}
           </p>
-          <small className="muted">
-            レシピは現在の合成が終わると変更できます。
-          </small>
+          <small className="muted">合成が終わるとレシピを変更できます。</small>
         </>
       ) : (
         <p className="production-status">
