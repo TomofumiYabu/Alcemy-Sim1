@@ -1,6 +1,6 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-24（Asia/Tokyo）。M1公開済み。レビュー対応の実装・Cloud検証完了、公開更新を準備中。
+最終更新: 2026-10-24（Asia/Tokyo）。M1とレビュー対応をGitHub Pagesで公開済み。実装・検証・公開確認を完了。
 
 ## 現在の依頼と成果
 
@@ -22,16 +22,24 @@
 | Pagesパスの型検査・本番ビルド | 成功 |
 | PagesパスのChromium E2E | デスクトップ12件 + モバイル12件、計24件成功 |
 | 開発起動 | 実ブラウザーでMVP描画・操作ボタン有効・ページ例外なしを確認 |
+| GitHub Actions | build/deploy成功、合計1分51秒 |
+| 公開配信と実操作 | HTTP 200と検証済みJSを確認。通常プレイ、タブ引き継ぎ、旧v1移行/バックアップ/仕事完了、モバイル保存復元に成功 |
 
 `npm run check` 合計94件成功、失敗・スキップなし。保存競合、自動/離脱保存、復元した仕事の完了、ページ復帰、未対応ブラウザーの安全停止、公開v1データの移行、設備交換まで検証した。
 
 ## Git・公開
 
-修正は `0736243`、`b3f7d69`、`3c3ce7c`、`4a8102c` に分けてcommit。文書更新後にmainへpushし、GitHub Actionsのbuild/deployと公開配信を確認する。
+修正は `0736243`、`b3f7d69`、`3c3ce7c`、`4a8102c` に分けてcommitし、文書commit `6761af5` とともにmainへpush済み。
 
 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 
-今回の公開更新は確認待ち。直前のMVPは [Actions実行 #4](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40077854098) で公開済み。
+[Actions実行 #5](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40082109594) が成功。build 1分33秒、deploy 11秒、全体1分51秒。公開JSは `index-D6AQJSw3.js` で、Cloudで検証した成果物と一致。
+
+公開ページのHTTP取得は既存CAによるTLS検証を維持し、その応答をChromiumに渡して操作を確認。デスクトップでMVP一巡と待機タブへの引き継ぎ、別プロファイルで固定v1セーブの移行・元JSONの退避・進行中合成の完了、モバイルで一巡と再読込復元に成功し、ページ/ネットワークエラーなし。
+
+補助スクリプトの初回は、テスト用のlocalStorage初期化がabout:blankでも動いてエラーを記録した。初期化を対象の公開originに限定して再実行し成功。製品コードの不具合ではなく、必須94件の実行は最初から成功している。
+
+元の保存/UI担当とロジック担当が読み取り専用で再レビューし、重大な修正漏れなし。後者はメモリー上で次のcontentVersionも模擬し、旧ジョブの完了後に新版の仕事が始まり、その再保存・復元が可能なことも確認。
 
 Cloudのstart_skillは94件検証と新しい保存仕様へ更新して保存済み。install_script・依存・認証設定は維持。Cloud設定の保存とPublishはGitHub Pages公開とは別で、新規タスクの復元は未検証。
 

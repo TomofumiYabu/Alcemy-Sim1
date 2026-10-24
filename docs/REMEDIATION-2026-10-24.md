@@ -53,4 +53,6 @@ Web Locksの排他ロックをページの利用中保持する。待機タブ�
 - `3c3ce7c`: UIの分割、プレビュー共有、数値検査。
 - `4a8102c`: 満杯の工房での停止設備交換。
 
-GitHub Pagesへの更新と実際の公開確認は `PROGRESS.md` に記録する。
+GitHub Pagesへの更新と実際の公開確認は [Actions実行 #5](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40082109594) で成功。公開配信をTLS検証して取得し、Chromiumで通常プレイ・複数タブ・旧セーブ・モバイルの操作を確認した。詳細は `PROGRESS.md`。
+
+元の保存/UI担当とロジック担当による再レビューでも、重大な問題は確認されなかった。次のcontentVersionを模擬した旧仕事の完了・新しい仕事の開始・再保存復元も独立して確認された。
