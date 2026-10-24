@@ -1,6 +1,6 @@
 # UI改善の納品記録
 
-2026-10-25（Asia/Tokyo）。ユーザー指定Goal「6. 納品」に向けて、公開済みUI-1／UI-2に続くUI-3／UI-4を実装した。対象は [Solへの指示書](SOL-UI-HANDOFF.md) の既存M1機能のUI改善。新しい経済・ゲーム機能は追加していない。
+2026-10-25（Asia/Tokyo）。ユーザー指定Goal「6. 納品」を完了。公開済みUI-1／UI-2に続くUI-3／UI-4を実装・検証・公開した。対象は [Solへの指示書](SOL-UI-HANDOFF.md) の既存M1機能のUI改善。新しい経済・ゲーム機能は追加していない。
 
 ## 実装
 
@@ -45,7 +45,20 @@ Pages本番ビルド・Cloud Chromium・1366×768・演出ありで、釜12台�
 
 実装 `06eaf79`、文書 `2023dbe` を `codex/ui-delivery` へpushし、[納品用PR #3](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/3)を作成済み。mainとの競合なし。
 
-mergeは自動承認レビューが今回のUI-3／UI-4リリース固有の公開許可を求めて拒否した。納品版の実装・検証・資料・PRは完了し、mainへの反映と公開のみ保留している。公開版はUI-2のまま。今回のCI・公開後の配信と実操作は未確認で、準備した公開確認を実行済みとは扱わない。許可後の手順と実際の配信結果はPROGRESSへ記録する。
+初回mergeは自動承認レビューが今回のリリース固有の公開許可を求めて拒否した。その後、ユーザーが「UI-3/UI-4のマージと公開を許可する」と明示し、PR #3をmainへmergeした（`4acae7e`）。[Actions実行 #8](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40116139289)はbuild／deployとも成功。CIログでも単体57件＋通常パス60件＋Pagesパス60件＝177件成功を確認した。失敗・スキップなし。CIの状態確認中はジョブ詳細APIに一時的なReadTimeout／HTTP 502があったが、完了後の実行結果・ログと公開応答で成功を確認できた。
+
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+2026-10-25（Asia/Tokyo）に公開HTML、JS、CSS、favicon、WebP12ファイルの計16ファイルでHTTP 200と検証済みdistとのSHA-256完全一致を確認。魔晶片のWebPはJS内に含まれ、全13画像を公開画面でデコードできた。公開JSは `index-BESGceIA.js`、CSSは `index-DqDQCbsR.css`。
+
+- PC（1440×900）・モバイル（390×844）：新規の雇用→派遣→合成→販売→研究、設備移動・購入配置、再読込後の復元、通知の非再生、ページ全体の横溢れなしを確認。
+- PCの別タブ：待機中の保存保護と、所有タブを閉じた後の最新状態からの引き継ぎを確認。
+- 別プロファイルの固定v1セーブ：schemaVersion 2への移行、元JSONの完全なバックアップ、旧ジョブの完了を確認。
+- PC（1366×768）・狭いモバイル（320×740）：不足素材から蒸留器・遺跡への導線、蒸留器の停止予約と完了後消灯、遺跡からの帰還、全アートのデコード、表示・音設定の保存復元、文字125%で横溢れなしを確認。
+- ページ例外、console error、リクエスト失敗は0。
+
+公開確認は継承したproxyとCAでTLS検証を保って取得した公開HTTP応答を、Chromiumの公開HTTPS originへ渡して実施した。16ファイルとも公開サイトから取得したもので、ローカルdistへの差し替えやTLS検証無効化は行っていない。Chromium自身の直接HTTPS経路は再評価していない。スクリプトは `.cache/delivery-public-check.mjs`、公開応答・JSON・画面は `/tmp/alcemy-delivery-public/` に保持し、commitしない。
+
 
 ## 対象外と確認限界
 

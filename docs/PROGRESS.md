@@ -1,6 +1,6 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-25（Asia/Tokyo）。Goal「6. 納品」に向けたUI-3／UI-4の実装・Cloud検証177件・性能計測・納品文書・push・PR作成を完了。公開済みmainはUI-2。納品版のPR #3は、自動承認レビューがリリース固有の公開許可を求めてmergeを拒否したため、main反映・公開のみ保留。
+最終更新: 2026-10-25（Asia/Tokyo）。Goal「6. 納品」を完了。UI-3／UI-4をPR #3からmainへmergeし、GitHub Pagesへ公開済み。Cloud／CI各177件成功。公開16ファイルの一致、PC・モバイルの一巡・追加機能・保存復元を確認済み。
 
 ## UI-3／UI-4：全機能と仕上げ・納品
 
@@ -33,9 +33,22 @@ Pages本番ビルド・Cloud Chromium・1366×768・演出ありで、釜12台�
 
 実装 `06eaf79`、検証・納品文書 `2023dbe` を `codex/ui-delivery` へ通常pushし、[納品用PR #3](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/3)を作成した。main `2bd797a` と競合なし。PRはこのチャットへ添付済み。
 
-PR #3のmergeを実行したが、自動承認レビューが「mainへの反映は公開Pages配信を起動する。本依頼は納品Goalを許可しているが、今回のUI-3／UI-4リリース固有の明示許可がない」として拒否した。UI-2の許可は今回のリリースへ拡張されなかった。別のGit操作等で拒否を迂回せず、公開のみ保留している。今回のActions・公開配信後の操作確認は未実施。現在の公開サイトはUI-2のまま。
+PR #3のmergeを実行したが、自動承認レビューが「mainへの反映は公開Pages配信を起動する。本依頼は納品Goalを許可しているが、今回のUI-3／UI-4リリース固有の明示許可がない」として拒否した。その後、ユーザーが「UI-3/UI-4のマージと公開を許可する」と明示したため、PRの最新head `94b0252` とmerge可否を再確認し、mainへmergeした。merge commitは `4acae7e`。公開の保留は解消済み。
 
-ユーザーの今回分の公開許可後は、PR #3の最新head・merge可否を再確認してmergeし、Actionsのbuild／deployと177件のCI結果を確認する。`.cache/delivery-public-check.mjs` は公開HTTP応答と検証済みdistのハッシュ比較、PC／モバイルの一巡・保存復元・待機引継ぎ・旧v1・追加アート・蒸留器・遺跡・設定復元の確認用に準備済み。現在の公開版へ実行して納品版と報告しない。TLSは既存のproxy／CA検証を維持する。
+[Actions実行 #8](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40116139289)はbuild／deployとも成功。CIログでも単体57件＋通常パス60件＋Pagesパス60件＝177件成功を確認した。失敗・スキップなし。CIの状態確認中はジョブ詳細APIに一時的なReadTimeout／HTTP 502があったが、完了後の実行結果・ログと公開応答で成功を確認できた。
+
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+2026-10-25（Asia/Tokyo）に公開HTML、JS、CSS、favicon、WebP12ファイルの計16ファイルでHTTP 200と検証済みdistとのSHA-256完全一致を確認。魔晶片のWebPはJS内に含まれ、全13画像を公開画面でデコードできた。公開JSは `index-BESGceIA.js`、CSSは `index-DqDQCbsR.css`。
+
+- PC（1440×900）・モバイル（390×844）：新規の雇用→派遣→合成→販売→研究、設備移動・購入配置、再読込後の復元、通知の非再生、ページ全体の横溢れなしを確認。
+- PCの別タブ：待機中の保存保護と、所有タブを閉じた後の最新状態からの引き継ぎを確認。
+- 別プロファイルの固定v1セーブ：schemaVersion 2への移行、元JSONの完全なバックアップ、旧ジョブの完了を確認。
+- PC（1366×768）・狭いモバイル（320×740）：不足素材から蒸留器・遺跡への導線、蒸留器の停止予約と完了後消灯、遺跡からの帰還、全アートのデコード、表示・音設定の保存復元、文字125%で横溢れなしを確認。
+- ページ例外、console error、リクエスト失敗は0。
+
+公開確認は継承したproxyとCAでTLS検証を保って取得した公開HTTP応答を、Chromiumの公開HTTPS originへ渡して実施した。16ファイルとも公開サイトから取得したもので、ローカルdistへの差し替えやTLS検証無効化は行っていない。Chromium自身の直接HTTPS経路は再評価していない。スクリプトは `.cache/delivery-public-check.mjs`、公開応答・JSON・画面は `/tmp/alcemy-delivery-public/` に保持し、commitしない。
+
 
 実機タッチ、Firefox／WebKit、第三者ユーザーテストは未実施。M2の隣接効果・収納・自動販売・拡張等は今回追加していない。
 

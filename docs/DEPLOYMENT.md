@@ -4,14 +4,14 @@
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
-- 公開対象はUI-2を反映したMVP。UI-1の操作に加え、夜の工房、調合釜、イリス、薬草・清水・傷薬の画像、完成・帰還・販売・研究の一時表示、OS／設定による演出軽減を実装。
-- ユーザーのUI-2公開許可後、[PR #2](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/2)をmainへmergeした。対象commitは `1d15947`。
-- [公開実行 #7](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40112369213)はbuild／deployとも成功。build 2分18秒、deploy 12秒、全体2分35秒。Cloud／CIそれぞれで単体51件＋通常パスE2E48件＋PagesパスE2E48件＝147件成功。型検査・本番ビルド成功。
-- 2026-10-25（Asia/Tokyo）に公開HTML／JS／CSS／favicon／画像6点、計10ファイルのHTTP 200を確認。公開JS `index-Ba_Z1hqR.js`、CSS `index-C48bOYN8.css`、画像すべてが、検証した成果物とSHA-256一致。
-- 公開応答を使い、PC・モバイルで一巡、完成・販売・研究の通知、画像デコード、設備移動・購入配置、再読込復元と通知非再生を確認。別タブの保存保護と所有権引継ぎ、固定v1セーブの移行・元JSONバックアップ・旧ジョブ完了も確認。ページ／console／リクエストエラーなし。
-- Cloudでは、継承したプロキシとCAによるTLS検証を維持して公開応答を取得し、Chromiumの公開HTTPS originへ渡して操作を検証した。画像も公開サイトから取得し、ローカルdistで代用せず、TLS検証無効化も行っていない。Chromium自身の直接HTTPS経路の成否は今回再評価していない。
+- 公開対象はUI-1〜UI-4を反映したMVP。全設備・人物・アイテム・探索先の専用画像、素材不足と研究の導線、移動・交換、通知、保存する表示・音の設定を実装。
+- ユーザーのUI-3／UI-4公開許可後、[PR #3](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/3)をmainへmergeした。対象commitは `4acae7e`。
+- [公開実行 #8](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40116139289)はbuild／deployとも成功。Cloud／CIそれぞれで単体57件＋通常パスE2E60件＋PagesパスE2E60件＝177件成功。型検査・本番ビルド成功。
+- 2026-10-25（Asia/Tokyo）に公開HTML／JS／CSS／favicon／WebP12ファイル、計16ファイルでHTTP 200と検証済み成果物とのSHA-256一致を確認。公開JSは `index-BESGceIA.js`、CSSは `index-DqDQCbsR.css`。魔晶片はJSへ含まれ、全13画像が公開画面でデコードできた。
+- PC・モバイルの一巡、通知と非再生、設備移動・購入配置、保存復元、待機タブの保護と引継ぎ、固定v1の移行・元JSONバックアップ・旧ジョブ完了を確認。追加機能も1366px／320pxで素材から蒸留器・遺跡への移動、停止予約、遺跡帰還、設定復元と文字125%を確認。ページ／console／リクエストエラーなし。
+- 継承したproxyとCAのTLS検証を維持して公開応答を取得し、Chromiumの公開HTTPS originへ渡して操作を確認した。公開サイトから取得した画像・ファイルを使い、ローカルdistで代用せず、TLS検証も無効化していない。Chromium自身の直接HTTPS経路は今回再評価していない。
 
-以前のM1・レビュー公開（実行 #5、94件）、UI-1（実行 #6、118件）の記録は `PROGRESS.md` に残す。UI-2の最新結果、素材記録、未実施範囲も同文書を参照。
+詳細、素材記録、性能、未実施範囲は [納品記録](UI-DELIVERY-2026-10-25.md) と `PROGRESS.md` を参照。以前のM1・レビュー公開（実行 #5、94件）、UI-1（#6、118件）、UI-2（#7、147件）の記録もPROGRESSに保持する。
 
 ## 初回設定（設定済み・リポジトリ再作成時の参考）
 
