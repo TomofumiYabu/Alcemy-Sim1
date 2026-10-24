@@ -45,6 +45,8 @@ Vitest単体テスト46件、型検査、本番ビルド、通常パスとGitHub
 
 - [開発ルール](AGENTS.md)
 - [調査結果](docs/RESEARCH.md)
+- [UI改善レポート](docs/UI-REPORT-2026-10-24.md)
+- [Sol向けUI改善の指示書・採用コンセプト](docs/SOL-UI-HANDOFF.md)
 - [ゲーム仕様案](docs/SPEC.md)
 - [技術構成](docs/ARCHITECTURE.md)
 - [実装計画と完了条件](docs/PLAN.md)
