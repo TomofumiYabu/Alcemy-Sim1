@@ -40,6 +40,11 @@ export function InventoryPanel({
                 {items[id].price > 0 &&
                   ` · ${salePrice(state, id as RecipeId)}金貨 / 個`}
               </small>
+              {id === 'extract' && (
+                <small className="intermediate-note">
+                  魔力薬の材料にも使います
+                </small>
+              )}
             </div>
             <strong className="item-count" data-testid={`inventory-${id}`}>
               {number(state.inventory[id])}

@@ -235,6 +235,12 @@ test('system and manual reduced motion keep results readable with animation disa
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(
     page.getByLabel('動きを控えめにする', { exact: true }),
+  ).not.toBeChecked();
+  await page
+    .getByRole('button', { name: '動きを端末の設定に合わせる', exact: true })
+    .click();
+  await expect(
+    page.getByLabel('動きを控えめにする', { exact: true }),
   ).toBeChecked();
 });
 

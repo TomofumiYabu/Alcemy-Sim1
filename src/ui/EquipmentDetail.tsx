@@ -1,4 +1,4 @@
-import { equipmentTypes, items, recipes } from '../game/content';
+import { equipmentTypes, items, recipes, research } from '../game/content';
 import {
   getCraftPreview,
   missingMaterials,
@@ -12,6 +12,8 @@ import { seconds } from './format';
 import type { Navigate, PanelProps } from './types';
 import { EquipmentArtwork, ItemArtwork } from './Artwork';
 import type { ItemId } from '../game/types';
+import { materialSource } from './materialSources';
+import { Icon } from './Icon';
 
 export function EquipmentDetail({
   state,
@@ -27,6 +29,17 @@ export function EquipmentDetail({
   disabled: boolean;
 }) {
   const preview = getCraftPreview(state, equipment.recipe);
+  const missing = (
+    Object.entries(recipes[equipment.recipe].inputs) as [ItemId, number][]
+  ).filter(([id, count]) => state.inventory[id] < count);
+  const sources = [
+    ...new Map(
+      missing.map(([id]) => {
+        const source = materialSource(state, id);
+        return [source.target, source];
+      }),
+    ).values(),
+  ];
   const targetKind = equipment.kind === 'cauldron' ? 'still' : 'cauldron';
   const target = equipmentTypes[targetKind];
   const exchangeReason = replacementReason(state, equipment.id, targetKind);
@@ -89,13 +102,16 @@ export function EquipmentDetail({
       </div>
       <div className="production-meta">
         <span>
-          ◷{' '}
+          <Icon name="clock" />{' '}
           {seconds(
             equipment.job?.total ?? recipeTicks(state, equipment.recipe),
           )}{' '}
           / 個
         </span>
-        <span>✧ 知識 +{equipment.job?.knowledge ?? preview.knowledge}</span>
+        <span>
+          <Icon name="knowledge" /> 知識 +
+          {equipment.job?.knowledge ?? preview.knowledge}
+        </span>
       </div>
       {equipment.job ? (
         <>
@@ -127,16 +143,46 @@ export function EquipmentDetail({
       >
         {equipment.enabled ? '次の合成を停止' : '自動合成を開始'}
       </button>
-      {!equipment.job &&
-        equipment.enabled &&
-        missingMaterials(state, equipment).length > 0 && (
+      {!equipment.job && (
+        <div className="material-shortages">
+          {missing.map(([id, count]) => (
+            <small key={id}>
+              <ItemArtwork item={id} />
+              {items[id].name} あと{count - state.inventory[id]}個
+            </small>
+          ))}
+          {sources.map((source) => (
+            <button
+              key={source.target}
+              className="subtle wide"
+              onClick={() => navigate(source.screen, source.target)}
+            >
+              {source.label} →
+            </button>
+          ))}
+        </div>
+      )}
+      {recipeIds
+        .filter(
+          (id) =>
+            recipes[id].kind === equipment.kind &&
+            !unlocked(state, recipes[id].requires),
+        )
+        .map((id) => (
           <button
+            key={id}
             className="subtle wide"
-            onClick={() => navigate('expeditions')}
+            onClick={() =>
+              navigate(
+                'research',
+                `[data-testid="research-${recipes[id].requires}"]`,
+              )
+            }
           >
-            素材を集める · 冒険者を開く →
+            {recipes[id].name}は「{research[recipes[id].requires!].name}」で解放
+            →
           </button>
-        )}
+        ))}
       <details className="equipment-replacement">
         <summary>移動・管理</summary>
         <button className="secondary wide" onClick={onMove}>

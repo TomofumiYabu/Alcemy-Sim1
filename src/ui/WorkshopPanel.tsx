@@ -13,9 +13,7 @@ import { AdventureBrief } from './AdventureBrief';
 import type { Feedback } from './feedback';
 
 type Placement =
-  | { type: 'buy'; kind: EquipmentKind }
-  | { type: 'move'; id: number }
-  | null;
+  { type: 'buy'; kind: EquipmentKind } | { type: 'move'; id: number } | null;
 export function WorkshopPanel({
   state,
   send,
@@ -26,7 +24,7 @@ export function WorkshopPanel({
   feedback,
 }: PanelProps & {
   active: boolean;
-  request: number;
+  request: { sequence: number; kind: EquipmentKind | undefined };
   navigate: Navigate;
   disabled: boolean;
   feedback: Feedback[];
@@ -39,7 +37,7 @@ export function WorkshopPanel({
   );
   const floor = useRef<HTMLDivElement>(null);
   const detail = useRef<HTMLDivElement>(null);
-  const lastRequest = useRef(request);
+  const lastRequest = useRef(request.sequence);
   const compact = useCompactLayout();
   const equipment =
     state.equipment.find((entry) => entry.id === selected) ??
@@ -51,8 +49,15 @@ export function WorkshopPanel({
     if (disabled) setPlacement(null);
   }, [disabled]);
   useEffect(() => {
-    if (request !== lastRequest.current) {
-      lastRequest.current = request;
+    if (request.sequence !== lastRequest.current) {
+      lastRequest.current = request.sequence;
+      const match =
+        request.kind &&
+        state.equipment.find((entry) => entry.kind === request.kind);
+      if (match) {
+        setSelected(match.id);
+        setCursor(match.y * GRID_COLUMNS + match.x);
+      }
       if (compact) setSheet(true);
       else
         detail.current
@@ -141,6 +146,12 @@ export function WorkshopPanel({
       id="workshop"
       className="workshop-layout"
       aria-labelledby="workshop-title"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && placement) {
+          event.preventDefault();
+          cancel();
+        }
+      }}
     >
       <div className="panel workshop-main">
         <div className="panel-heading">
@@ -291,7 +302,11 @@ export function WorkshopPanel({
               <div key={kind}>
                 <button
                   aria-label={`${data.name}を購入・配置`}
-                  disabled={locked || state.gold < data.price}
+                  disabled={
+                    locked ||
+                    state.gold < data.price ||
+                    state.equipment.length >= GRID_CAPACITY
+                  }
                   onClick={() => startPlacement({ type: 'buy', kind })}
                 >
                   {data.name}
@@ -302,7 +317,9 @@ export function WorkshopPanel({
                     ? '「蒸留の技法」で解放'
                     : state.gold < data.price
                       ? '金貨が足りません'
-                      : '配置先の決定時に購入'}
+                      : state.equipment.length >= GRID_CAPACITY
+                        ? '空きマスなし・停止設備の「移動・管理」から交換できます'
+                        : '配置先の決定時に購入'}
                 </small>
               </div>
             );

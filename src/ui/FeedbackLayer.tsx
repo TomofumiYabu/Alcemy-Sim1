@@ -1,7 +1,7 @@
 import { adventurerTypes, items, research } from '../game/content';
 import { itemIds } from '../game/types';
 import type { Feedback } from './feedback';
-import { IrisPortrait, ItemArtwork } from './Artwork';
+import { CharacterPortrait, ItemArtwork } from './Artwork';
 import { number } from './format';
 
 export function FeedbackLayer({ feedback }: { feedback: Feedback[] }) {
@@ -31,13 +31,7 @@ export function FeedbackLayer({ feedback }: { feedback: Feedback[] }) {
             </>
           ) : event.type === 'returned' ? (
             <>
-              {event.adventurerId === 'iris' ? (
-                <IrisPortrait />
-              ) : (
-                <span className="feedback-symbol" aria-hidden="true">
-                  R
-                </span>
-              )}
+              <CharacterPortrait id={event.adventurerId} />
               <div>
                 <strong>
                   {adventurerTypes[event.adventurerId].name}が帰還

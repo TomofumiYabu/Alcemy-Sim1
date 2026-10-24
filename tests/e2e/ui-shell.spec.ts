@@ -273,7 +273,8 @@ test('stopping a batch shows finishing and a missing-material route opens expedi
     .click();
   await expect(page.getByTestId('equipment-detail')).toContainText('素材待ち');
   await page
-    .getByRole('button', { name: '素材を集める · 冒険者を開く →', exact: true })
+    .getByRole('button', { name: 'ささやきの森への派遣を開く →', exact: true })
+    .first()
     .click();
   await expect(
     page.getByRole('heading', { name: '冒険者ギルド' }),
