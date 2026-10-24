@@ -4,10 +4,10 @@
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 予定URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
-- 公開対象は準備画面。ゲームの試遊機能はM1で追加予定です。
-- Cloud上で通常パスとPagesパスの型検査・ビルド・実Chromium E2E計4件は成功済みです。
-- [初回Actions実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40074910335) は `build` 成功、`deploy` 失敗。`Configure Pages` でPagesサイト取得が404となり、Pagesを有効にしてGitHub Actions方式に設定するようGitHubが案内しています。
-- 公開予定URLへの実要求もHTTP 404でした。公開完了ではありません。初回設定後にワークフローを再実行して公開を確認する必要があります。
+- 公開対象は遊べるMVP。派遣・設備配置・自動合成・販売・研究・セーブを実装しています。
+- Cloud上の単体テスト33件、通常/Pagesパスの実Chromium E2E計24件、型検査・ビルドが成功済みです。
+- 初回はPagesサイト取得404で失敗しましたが、今回の開発着手時点で既存ページのHTTP 200を確認でき、Pages有効化待ちは解消済みです。
+- 最新MVPへの更新と公開確認結果は `PROGRESS.md` に記録します。
 
 ## 初回設定（GitHubのWeb画面）
 
@@ -20,11 +20,11 @@
 
 ## 以後の更新
 
-`main` への通常pushで `.github/workflows/pages.yml` が動きます。
+`main` へのアプリケーション変更のpushで `.github/workflows/pages.yml` が動きます。文書（Markdownとdocs配下）だけの更新では公開処理を繰り返しません。手動実行は可能です。
 
 1. `.node-version` と `packageManager` に合わせたNode.js/npmを用意し、`npm ci`。
 2. GitHub runner用のChromiumをPlaywrightの公式インストーラーで導入。
-3. `npm run check` で型検査・本番ビルド・通常/Pagesパスそれぞれのデスクトップ/モバイルE2Eを実行。
+3. `npm run check` でVitest単体テスト・型検査・本番ビルド・通常/Pagesパスそれぞれのデスクトップ/モバイルE2Eを実行。
 4. 最後のPagesパス検証に使った `dist/` をアップロード。
 5. `github-pages` environmentにデプロイ。
 

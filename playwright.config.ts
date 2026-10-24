@@ -6,7 +6,9 @@ const executablePath = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium';
 const basePath = process.env.VITE_BASE_PATH ?? '/';
 const baseURL = new URL(basePath, 'http://127.0.0.1:4173').href;
 if (!existsSync(executablePath)) {
-  throw new Error('Chromium is missing. Set CHROMIUM_PATH to an installed Chromium executable.');
+  throw new Error(
+    'Chromium is missing. Set CHROMIUM_PATH to an installed Chromium executable.',
+  );
 }
 
 export default defineConfig({
@@ -17,6 +19,7 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL,
+    reducedMotion: 'reduce',
     launchOptions: { executablePath },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
