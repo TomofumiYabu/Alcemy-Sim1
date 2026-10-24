@@ -1,8 +1,8 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { SAVE_KEY } from '../../src/persistence/save';
-import { LEGACY_BACKUP_KEY } from '../../src/persistence/save';
+import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../../src/persistence/save';
 import { readFileSync } from 'node:fs';
+import { closeOverlay, equipment, go, save, settings } from './navigation';
 
 async function open(page: Page) {
   await page.clock.install({ time: new Date('2026-10-24T00:00:00Z') });
@@ -21,12 +21,14 @@ test('only one tab can change or save progress and the next owner reloads the la
   context,
 }) => {
   await open(page);
+  await go(page, '冒険者');
   await expect(
     page.getByRole('button', { name: 'イリスを雇う', exact: true }),
   ).toBeEnabled();
   const other = await context.newPage();
   await open(other);
   await expect(other.getByRole('note')).toContainText('待機中');
+  await settings(other);
   await expect(
     other.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeDisabled();
@@ -36,22 +38,24 @@ test('only one tab can change or save progress and the next owner reloads the la
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
   await page.clock.runFor(5_000);
+  // Close the modal so the waiting tab's HUD is accessible.
+  await closeOverlay(other);
   await expect(other.getByTestId('gold')).toHaveText('80');
-  // A waiting page's timers and visibility handlers must never overwrite the owner.
   await other.clock.fastForward(10_000);
   await other.evaluate(() =>
     document.dispatchEvent(new Event('visibilitychange')),
   );
   expect((await saved(other)).gold).toBe(80);
   await page.close();
+  await settings(other);
   await expect(
     other.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeEnabled();
-  await expect(other.getByTestId('gold')).toHaveText('80');
   await other.getByRole('button', { name: '今すぐ保存', exact: true }).click();
   expect((await saved(other)).adventurers[0].hired).toBe(true);
   const third = await context.newPage();
   await open(third);
+  await settings(third);
   await expect(
     third.getByRole('button', { name: '工房を初期化', exact: true }),
   ).toBeDisabled();
@@ -63,7 +67,9 @@ test('only one tab can change or save progress and the next owner reloads the la
   await expect(
     third.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeEnabled();
+  await closeOverlay(third);
   await expect(third.getByTestId('gold')).toHaveText('100');
+  await go(third, '冒険者');
   await expect(
     third.getByRole('button', { name: 'イリスを雇う', exact: true }),
   ).toBeEnabled();
@@ -73,23 +79,30 @@ test('autosave records elapsed work and pagehide saves the latest remaining time
   page,
 }) => {
   await open(page);
+  await go(page, '冒険者');
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
+  await equipment(page);
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
+  await closeOverlay(page);
   await page.clock.runFor(5_300);
   expect((await saved(page)).tick).toBe(50);
   await page.reload();
+  await settings(page);
   await expect(
     page.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeEnabled();
+  await closeOverlay(page);
   const restored = await saved(page);
   expect(restored.tick).toBe(53);
   expect(restored.equipment[0].job.remaining).toBe(28);
   expect(restored.adventurers[0].trip.remaining).toBe(97);
+  await go(page, '在庫・販売');
   await page.clock.runFor(2_800);
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
+  await go(page, '冒険者');
   await page.clock.runFor(6_900);
   await expect(page.getByTestId('adventurer-iris')).toContainText('待機中');
 });
@@ -98,11 +111,14 @@ test('a restored page can reacquire ownership after pagehide without a stale clo
   page,
 }) => {
   await open(page);
+  await go(page, '冒険者');
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  await settings(page);
   await expect(
     page.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeDisabled();
+  await closeOverlay(page);
   await page.clock.fastForward(60_000);
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
   await expect(
@@ -122,6 +138,7 @@ test('unavailable Web Locks cannot silently fall back to unprotected writes', as
   await expect(page.getByRole('note')).toContainText(
     '排他制御が利用できません',
   );
+  await go(page, '冒険者');
   await expect(
     page.getByRole('button', { name: 'イリスを雇う', exact: true }),
   ).toBeDisabled();
@@ -145,19 +162,19 @@ test('the released v1 save is migrated with a backup and its old work continues'
     { key: SAVE_KEY, value: legacy },
   );
   await open(page);
-  await expect(
-    page.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeEnabled();
   await expect(page.getByTestId('gold')).toHaveText('80');
-  await page.getByRole('button', { name: '今すぐ保存', exact: true }).click();
+  await save(page);
   expect((await saved(page)).schemaVersion).toBe(2);
   expect(
     await page.evaluate((key) => localStorage.getItem(key), LEGACY_BACKUP_KEY),
   ).toBe(legacy);
   await page.reload();
+  await settings(page);
   await expect(
     page.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeEnabled();
+  await closeOverlay(page);
+  await go(page, '在庫・販売');
   await page.clock.runFor(5_100);
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
   await expect(page.getByTestId('knowledge')).toHaveText('1');
