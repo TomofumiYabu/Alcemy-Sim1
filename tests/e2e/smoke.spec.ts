@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
 import { encodeSave, SAVE_KEY } from '../../src/persistence/save';

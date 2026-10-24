@@ -10,6 +10,7 @@
   --border: #34453b;
   --panel: #1b2a24;
 }
+.game-controls { border: 0; margin: 0; padding: 0; min-width: 0; }
 * {
   box-sizing: border-box;
 }

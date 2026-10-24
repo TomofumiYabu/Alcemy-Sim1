@@ -6,7 +6,9 @@ import {
   TICK_MS,
 } from '../game/engine';
 import type { Command, GameState } from '../game/types';
-import { loadGame, saveGame } from '../persistence/save';
+import { loadGame, SAVE_KEY, saveGame } from '../persistence/save';
+import { createSaveSession } from '../persistence/session';
+import type { SaveSession, SessionRole } from '../persistence/session';
 
 export function useGame() {
   const [initial] = useState(() => {
@@ -24,10 +26,14 @@ export function useGame() {
   const [state, setState] = useState(initial.state);
   const current = useRef(state);
   const [blocked, setBlocked] = useState(initial.blocked);
+  const blockedRef = useRef(initial.blocked);
+  const session = useRef<SaveSession | null>(null);
+  const [role, setRole] = useState<SessionRole>('waiting');
   const [saveError, setSaveError] = useState<string | null>(initial.message);
   const [notice, setNotice] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const persist = useCallback((next: GameState) => {
+    if (!session.current?.isOwner() || blockedRef.current) return;
     let error: string | null;
     try {
       error = saveGame(window.localStorage, next);
@@ -41,9 +47,41 @@ export function useGame() {
     current.current = next;
     setState(next);
   }, []);
+  useEffect(() => {
+    const reload = () => {
+      let loaded;
+      try { loaded = loadGame(window.localStorage); }
+      catch { loaded = { state: createGame(), blocked: true, message: '保存領域を読み込めません。' }; }
+      update(loaded.state); blockedRef.current = loaded.blocked;
+      setBlocked(loaded.blocked); setSaveError(loaded.message); setSaved(false);
+    };
+    const connect = () => {
+      if (session.current) return;
+      let locks: LockManager | undefined;
+      try { locks = navigator.locks; } catch { /* unavailable in this browser */ }
+      session.current = createSaveSession(locks, reload, setRole);
+    };
+    const leave = () => {
+      persist(current.current);
+      session.current?.dispose(); session.current = null; setRole('waiting');
+    };
+    const changed = (event: StorageEvent) => {
+      if (event.key === SAVE_KEY && !session.current?.isOwner()) reload();
+    };
+    connect();
+    window.addEventListener('pagehide', leave);
+    window.addEventListener('pageshow', connect);
+    window.addEventListener('storage', changed);
+    return () => {
+      window.removeEventListener('pagehide', leave);
+      window.removeEventListener('pageshow', connect);
+      window.removeEventListener('storage', changed);
+      leave();
+    };
+  }, [update, persist]);
   const send = useCallback(
     (command: Command) => {
-      if (blocked) return false;
+      if (blockedRef.current || !session.current?.isOwner()) return false;
       const result = applyCommand(current.current, command);
       setNotice(result.error);
       if (!result.error) {
@@ -55,7 +93,7 @@ export function useGame() {
     [blocked, update, persist],
   );
   useEffect(() => {
-    if (blocked) return;
+    if (blocked || role !== 'owner') return;
     let last = performance.now();
     let remainder = 0;
     const resetClock = () => {
@@ -65,7 +103,7 @@ export function useGame() {
     };
     const interval = window.setInterval(() => {
       const now = performance.now();
-      if (document.hidden) {
+      if (document.hidden || !session.current?.isOwner()) {
         last = now;
         remainder = 0;
         return;
@@ -80,19 +118,19 @@ export function useGame() {
     }, TICK_MS);
     const autosave = window.setInterval(() => persist(current.current), 5_000);
     document.addEventListener('visibilitychange', resetClock);
-    window.addEventListener('pagehide', resetClock);
     return () => {
       window.clearInterval(interval);
       window.clearInterval(autosave);
       document.removeEventListener('visibilitychange', resetClock);
-      window.removeEventListener('pagehide', resetClock);
     };
-  }, [blocked, update, persist]);
+  }, [blocked, role, update, persist]);
   const reset = () => {
+    if (!session.current?.isOwner()) return false;
     if (!window.confirm('工房の進行を初期化します。よろしいですか？'))
       return false;
     const next = createGame();
     update(next);
+    blockedRef.current = false;
     setBlocked(false);
     setNotice(null);
     persist(next);
@@ -100,6 +138,7 @@ export function useGame() {
   };
   return {
     state,
+    role,
     blocked,
     saveError,
     notice,

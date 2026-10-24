@@ -127,7 +127,7 @@ export function App() {
           <h1>工房の記録を確認してください</h1>
           <p role="alert">{game.saveError}</p>
           <p>新規開始を選ぶまで、元のデータを自動保存で上書きしません。</p>
-          <button className="primary" onClick={reset}>
+          <button className="primary" onClick={reset} disabled={game.role !== 'owner'}>
             新しい工房を始める
           </button>
         </main>
@@ -139,7 +139,7 @@ export function App() {
             <a href="#inventory">▤ 在庫・販売</a>
             <a href="#research">✧ 研究</a>
             <span className="save-state" role="status">
-              {game.saveError
+              {game.role !== 'owner' ? '保存保護のため待機中' : game.saveError
                 ? '保存に失敗'
                 : game.saved
                   ? '● 保存済み'
@@ -147,6 +147,8 @@ export function App() {
             </span>
           </nav>
           <main>
+            {game.role !== 'owner' && <div className="message" role="note">{game.role === 'unsupported' ? 'このブラウザーでは保存の排他制御が利用できません。最新のChrome・Firefox・Safariで開いてください。' : '別のタブで工房が開かれています。このタブは待機中です。先のタブを閉じると、最新の記録から再開します。'}</div>}
+            <fieldset className="game-controls" disabled={game.role !== 'owner'}>
             <div className="page-heading">
               <div>
                 <p className="eyebrow">THE STARLIT ATELIER</p>
@@ -767,6 +769,7 @@ export function App() {
                 </button>
               </div>
             </footer>
+            </fieldset>
           </main>
         </>
       )}
