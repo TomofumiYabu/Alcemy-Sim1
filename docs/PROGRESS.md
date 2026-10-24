@@ -49,6 +49,7 @@ Cloud環境を将来のタスクで使うには、ユーザーが環境設定で
 - `/Alcemy-Sim1/` 配下に対応するVite設定、Playwrightの接続先、favicon確認を追加。通常の開発パスも維持。
 - `npm run check` は通常/Pagesパスの型検査・ビルド・デスクトップ/モバイルE2E計4件が成功。Pages用JS・CSS・faviconの参照先を実ブラウザーで確認。
 - 公開方法、初回のPages有効化、失敗時の対応を `docs/DEPLOYMENT.md` に記録。
-- GitHub APIへの要求とHTTPS CONNECTがCloudプロキシから403。Pagesの現在設定、リモートActionsの成否、公開URLへの応答は未確認。これはGitHubトークン不足を確認した結果ではない。
+- GitHub APIへの要求とHTTPS CONNECTがCloudプロキシから403。これはGitHubトークン不足を確認した結果ではない。
+- commit `89a7b5e` を `main` にpushし、[初回Actions実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40074910335) を公開Web画面から確認。`build` は45秒で成功、`deploy` は `Configure Pages` でPagesサイト取得404のため失敗。公開予定URLも実要求でHTTP 404を確認。
 - Cloud設定の許可先追加案に `api.github.com` と `tomofumiyabu.github.io` を保存済み。既存のプリセット・インストール手順は維持。
-- 残作業: API接続制限の反映後にPages設定・Actions実行・公開URLを確認するか、ユーザーがGitHubのSettings → PagesでSourceをGitHub Actionsに設定してワークフローを実行する。現在の公開対象は準備画面であり、ゲーム本体の未実装状態は変わらない。
+- 残作業: ユーザーがGitHubのSettings → PagesでSourceをGitHub Actionsに設定してワークフローを再実行する。あるいはCloudのAPI接続制限を環境設定で反映後、こちらでPagesを設定して再実行する。現在の公開対象は準備画面であり、ゲーム本体の未実装状態は変わらない。

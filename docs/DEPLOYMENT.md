@@ -6,7 +6,8 @@
 - 予定URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 - 公開対象は準備画面。ゲームの試遊機能はM1で追加予定です。
 - Cloud上で通常パスとPagesパスの型検査・ビルド・実Chromium E2E計4件は成功済みです。
-- Pages有効化状態・GitHub Actions上の実行結果・公開URLの実応答は未確認です。コードのpushやCloud内のテスト成功だけを公開成功とは扱いません。
+- [初回Actions実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40074910335) は `build` 成功、`deploy` 失敗。`Configure Pages` でPagesサイト取得が404となり、Pagesを有効にしてGitHub Actions方式に設定するようGitHubが案内しています。
+- 公開予定URLへの実要求もHTTP 404でした。公開完了ではありません。初回設定後にワークフローを再実行して公開を確認する必要があります。
 
 ## 初回設定（GitHubのWeb画面）
 
@@ -42,6 +43,8 @@ Pagesパスだけを検証する場合は `npm run test:e2e:pages`。通常開�
 
 今回、既存認証を使った `gh api repos/TomofumiYabu/Alcemy-Sim1` がGitHubに到達する前に拒否され、HTTPS CONNECTもプロキシから403でした。トークン不足を示すGitHub API応答ではありません。Gitの読み書きは成功しています。
 
-APIでのPages設定と公開確認に必要な `api.github.com` と `tomofumiyabu.github.io` を、既存のpackage_managersプリセットを維持してCloud環境設定の変更案に追加しました。変更案の保存は実行環境への反映ではありません。環境設定で反映後、APIを再試行し、実際の権限とPages状態を確認します。秘密値をチャットに貼ったり、新しいトークンを先回りして発行したりする必要はありません。
+APIでのPages設定と公開確認に必要な `api.github.com` と `tomofumiyabu.github.io` を、既存のpackage_managersプリセットを維持してCloud環境設定の変更案に追加しました。変更案の保存は実行環境への反映ではありません。最終確認の実機設定はspec revision 1、追加のallowed_hostsは空のままでした。環境設定で反映後、APIを再試行し、実際の権限とPages状態を確認します。秘密値をチャットに貼ったり、新しいトークンを先回りして発行したりする必要はありません。
+
+APIを使わない公開GitHub Web画面からはActionsの実行結果を確認できました。また公開予定のgithub.ioホストには到達し、HTTP 404を確認しています。API接続制限と、初回Pages設定不足によるデプロイ失敗は区別します。
 
 上記のGitHub Web画面での初回設定は、このCloudのAPI接続制限を解消しなくてもユーザーが行えます。
