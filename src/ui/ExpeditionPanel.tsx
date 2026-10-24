@@ -18,7 +18,9 @@ export function ExpeditionPanel({ state, send }: PanelProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">EXPEDITIONS</p>
-          <h2 id="expeditions-title">冒険者ギルド</h2>
+          <h2 id="expeditions-title" tabIndex={-1}>
+            冒険者ギルド
+          </h2>
         </div>
         <span className="badge">
           {state.adventurers.filter((entry) => entry.hired).length} / 2 雇用

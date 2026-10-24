@@ -11,7 +11,9 @@ export function InventoryPanel({ state, send }: PanelProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">STOCK & MARKET</p>
-          <h2 id="inventory-title">在庫と販売</h2>
+          <h2 id="inventory-title" tabIndex={-1}>
+            在庫と販売
+          </h2>
         </div>
         <span className="badge">売上累計 {number(state.stats.earned)}金貨</span>
       </div>
@@ -40,7 +42,14 @@ export function InventoryPanel({ state, send }: PanelProps) {
                 disabled={state.inventory[id] === 0}
                 onClick={() => send({ type: 'sell', item: id as RecipeId })}
               >
-                すべて売る
+                {number(state.inventory[id])}個売却
+                <small>
+                  +
+                  {number(
+                    state.inventory[id] * salePrice(state, id as RecipeId),
+                  )}
+                  金貨
+                </small>
               </button>
             ) : (
               <span className="material-badge">素材</span>

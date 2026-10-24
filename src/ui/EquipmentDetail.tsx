@@ -9,27 +9,35 @@ import {
 import { recipeIds } from '../game/types';
 import type { Equipment, RecipeId } from '../game/types';
 import { seconds } from './format';
-import type { PanelProps } from './types';
+import type { Navigate, PanelProps } from './types';
 
 export function EquipmentDetail({
   state,
   send,
   equipment,
   onMove,
-}: PanelProps & { equipment: Equipment; onMove: () => void }) {
+  navigate,
+  disabled,
+}: PanelProps & {
+  equipment: Equipment;
+  onMove: () => void;
+  navigate: Navigate;
+  disabled: boolean;
+}) {
   const preview = getCraftPreview(state, equipment.recipe);
   const targetKind = equipment.kind === 'cauldron' ? 'still' : 'cauldron';
   const target = equipmentTypes[targetKind];
   const exchangeReason = replacementReason(state, equipment.id, targetKind);
   return (
-    <div className="equipment-detail" data-testid="equipment-detail">
+    <fieldset
+      className="game-controls equipment-detail"
+      data-testid="equipment-detail"
+      disabled={disabled}
+    >
       <div className="detail-heading">
         <h3>
           {equipmentTypes[equipment.kind].name} <span>#{equipment.id}</span>
         </h3>
-        <button className="subtle" onClick={onMove}>
-          この設備を移動
-        </button>
       </div>
       <label className="select-label">
         合成するレシピ
@@ -105,12 +113,26 @@ export function EquipmentDetail({
         </p>
       )}
       <button
-        className={equipment.enabled ? 'secondary wide' : 'primary wide'}
+        className={`craft-toggle ${equipment.enabled ? 'secondary wide' : 'primary wide'}`}
         onClick={() => send({ type: 'toggle', id: equipment.id })}
       >
         {equipment.enabled ? '次の合成を停止' : '自動合成を開始'}
       </button>
-      <div className="equipment-replacement">
+      {!equipment.job &&
+        equipment.enabled &&
+        missingMaterials(state, equipment).length > 0 && (
+          <button
+            className="subtle wide"
+            onClick={() => navigate('expeditions')}
+          >
+            素材を集める · 冒険者を開く →
+          </button>
+        )}
+      <details className="equipment-replacement">
+        <summary>移動・管理</summary>
+        <button className="secondary wide" onClick={onMove}>
+          この設備を移動
+        </button>
         <button
           className="secondary wide"
           aria-label={`${target.name}へ交換`}
@@ -125,7 +147,7 @@ export function EquipmentDetail({
           {exchangeReason ??
             '同じマスで交換します。元の設備の返金はありません。'}
         </small>
-      </div>
-    </div>
+      </details>
+    </fieldset>
   );
 }

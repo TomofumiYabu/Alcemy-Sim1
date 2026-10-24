@@ -2,6 +2,7 @@ import { expect, test } from './fixtures';
 import { createGame } from '../../src/game/engine';
 import { GRID_CAPACITY, GRID_COLUMNS } from '../../src/game/config';
 import { encodeSave, SAVE_KEY } from '../../src/persistence/save';
+import { closeOverlay, equipment, go, manage, save } from './navigation';
 
 test('a completely occupied workshop can exchange a stopped machine and continue distilling', async ({
   page,
@@ -27,7 +28,10 @@ test('a completely occupied workshop can exchange a stopped machine and continue
   await page.clock.install({ time: new Date('2026-10-24T00:00:00Z') });
   await page.clock.pauseAt(new Date('2026-10-24T00:00:01Z'));
   await page.goto('./');
+  await equipment(page);
+  await manage(page);
   await page.getByRole('button', { name: '蒸留器へ交換', exact: true }).click();
+  await closeOverlay(page);
   await expect(page.getByTestId('gold')).toHaveText('55');
   await expect(
     page.getByRole('button', { name: /^(調合釜|蒸留器) #/ }),
@@ -35,15 +39,18 @@ test('a completely occupied workshop can exchange a stopped machine and continue
   await expect(
     page.getByRole('button', { name: '蒸留器 #1', exact: true }),
   ).toBeVisible();
+  await equipment(page, '蒸留器 #1');
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
+  await go(page, '在庫・販売');
   await page.clock.fastForward(11_000);
   await expect(page.getByTestId('inventory-extract')).toHaveText('1');
-  await page.getByRole('button', { name: '今すぐ保存', exact: true }).click();
+  await save(page);
   await page.reload();
   await expect(
     page.getByRole('button', { name: '蒸留器 #1', exact: true }),
   ).toBeVisible();
+  await go(page, '在庫・販売');
   await expect(page.getByTestId('inventory-extract')).toHaveText('1');
 });

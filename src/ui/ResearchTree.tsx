@@ -13,7 +13,9 @@ export function ResearchTree({ state, send }: PanelProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">KNOWLEDGE TREE</p>
-          <h2 id="research-title">錬金術の研究</h2>
+          <h2 id="research-title" tabIndex={-1}>
+            錬金術の研究
+          </h2>
         </div>
         <span className="badge">
           {state.research.length} / {researchIds.length} 研究済み
