@@ -4,11 +4,15 @@
 
 - React 19 + TypeScript + Vite。本番成果物は `dist/` の静的ファイル。
 - `src/main.tsx`: Reactアプリケーション起動。
-- `src/ui/App.tsx`: 工房・在庫・冒険者・研究・目標案内の画面。
+- `src/ui/App.tsx`: 149行の画面統合。工房・設備詳細・在庫・派遣・研究・目標・記録は個別コンポーネントに分割。
 - `src/ui/useGame.ts`: ゲーム状態と実時計、自動保存、可視性変更の接続。
 - `src/style.css`: 中世の工房をイメージしたUIと画面幅対応。
 - `src/game/`: データ・コマンド・固定tickのシミュレーション。
-- `src/persistence/save.ts`: Zodによる構造検証、参照整合性検証、読み書きと復旧。
+- `src/persistence/save.ts`: 移行後の検証、読み書き、旧JSONのバックアップと復旧。
+- `src/persistence/session.ts`: Web Locksによる書き込み所有権と解放。
+- `src/persistence/migrate.ts` / `legacyV1.ts`: 凍結した旧schemaからの明示的な移行。
+- `src/game/contentVersions.ts`: 公開済み数値ルールの履歴。
+- `src/game/config.ts`: 工房寸法と容量。
 - `tests/unit/`: Vitestで経済・時間・研究・保存を検証。
 - `tests/e2e/`: 本番ビルドを実Chromiumで操作し、一巡・製造・研究・破損復旧・保存失敗・非表示停止を検証。
 - `scripts/setup.sh`: 書き込み可能なキャッシュを利用する `npm ci` とChromium確認。
@@ -26,6 +30,8 @@ src/
   game/
     types.ts           Zod状態schemaと推論型・コマンド型
     content.ts         アイテム・レシピ・設備・研究の定義
+    contentVersions.ts  変更しない公開済み数値ルールの履歴
+    config.ts          工房寸法・容量の共通定義
     engine.ts          コマンド・tick・不足/価格/解放状態の算出
   persistence/save.ts  保存のschema検証・version・復旧
   ui/                  工房・派遣・研究などのReact表示
@@ -48,7 +54,11 @@ MVPはReact標準の状態管理と純粋関数で構成し、外部状態管理
 
 ## 保存の方針
 
-初期版はlocalStorageに `schemaVersion` とゲーム状態を保存します。読み込みデータは信用せず、有限・非負の数値、ID、配置、研究前提、ジョブ参照を検証します。未知versionや破損データを自動上書きせず、破損を案内して明示的な新規開始を提供します。
+localStorageにはschemaVersion 2とcontentVersion、ゲーム状態を保存します。公開済みv1の構造は凍結し、移行後に厳密検証します。旧JSONは初回の書き込み前にバックアップします。読み込みデータは信用せず、有限・非負の数値、ID、配置、研究前提、ジョブ参照を検証します。未知versionや破損データを自動上書きせず、破損を案内して明示的な新規開始を提供します。
+
+保存・初期化と時計はWeb Locksの所有タブだけで動かします。所有権を取得したら最新データを読み直し、離脱時は保存後に解放します。待機中タブはstorage通知で表示を更新します。
+
+合成と派遣の表示プレビューはジョブ生成と同じ関数を使います。数値を変更する場合は履歴エントリを追加してCONTENT_VERSIONを進めます。既存エントリを編集すると旧セーブの契約を壊すため禁止です。固定v1 fixtureと現行定義/履歴の一致テストを維持します。
 
 MVPでは端末間同期やオフライン加算は行いません。セーブは各ブラウザーに依存するため、将来必要ならJSONのインポート/エクスポートを追加します。CloudのE2Eテストは隔離されたブラウザープロファイルで動き、ユーザーのゲーム保存とは共有しません。
 

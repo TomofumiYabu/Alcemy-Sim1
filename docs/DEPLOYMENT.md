@@ -5,7 +5,7 @@
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 - 公開対象は遊べるMVP。派遣・設備配置・自動合成・販売・研究・セーブを実装しています。
-- Cloud上の単体テスト33件、通常/Pagesパスの実Chromium E2E計24件、型検査・ビルドが成功済みです。
+- レビュー対応後はCloud上の単体テスト46件、通常/Pagesパスの実Chromium E2E計48件、型検査・ビルドが成功済みです。
 - 初回はPagesサイト取得404で失敗しましたが、今回の開発着手時点で既存ページのHTTP 200を確認でき、Pages有効化待ちは解消済みです。
 - [MVPの公開実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40077854098) はbuild/deployとも成功。公開HTMLはHTTP 200で、MVPのJSを配信していることを確認しました。
 - 公開配信を既存CAでTLS検証して取得し、Chromiumへ渡す方式でデスクトップ/モバイルの一巡と保存復元を確認。Chromium自身の直接HTTPS経路はCloudプロキシのCA信頼設定で停止したため、直接接続の成功とは扱っていません。詳細は `PROGRESS.md` を参照してください。
