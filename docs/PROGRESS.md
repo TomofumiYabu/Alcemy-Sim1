@@ -1,6 +1,6 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-24（Asia/Tokyo）。UI-1「操作の骨格」を実装・検証済み。mainへの直接pushは自動承認レビューで拒否され、UI-1の公開配信は未実施。機能ブランチとPRで変更を確認できる形にする。
+最終更新: 2026-10-24（Asia/Tokyo）。UI-1「操作の骨格」を実装・検証済み。mainへの直接pushは自動承認レビューで拒否され、UI-1の公開配信は未実施。機能ブランチと[PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)へpush済み。
 
 ## UI-1：操作の骨格（今回のGoal）
 
@@ -40,7 +40,7 @@ Cloud Chromium・1366×768・Pages本番ビルドで24台の釜を同時稼働�
 
 ### Git・配信状態
 
-実装commitは `30aa8de`。`git push origin HEAD:main`は実行前に自動承認レビューで拒否された。理由は「UI-1完了の依頼だけでは、Pagesの本番配信を起動するdefault mainへのpushが明示的に許可されていない」。リモートmainと公開サイトは変更していない。代わりに `codex/ui-1-workshop-navigation` を用意し、検証済み変更をPRから確認できる形にする。mainへの反映・Pages公開と公開後の操作確認は承認待ち。
+実装commitは `30aa8de`。`git push origin HEAD:main`は実行前に自動承認レビューで拒否された。理由は「UI-1完了の依頼だけでは、Pagesの本番配信を起動するdefault mainへのpushが明示的に許可されていない」。リモートmainと公開サイトは変更していない。代わりに `codex/ui-1-workshop-navigation` へ実装と文書をpushし、[Draft PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)を作成した。mainへの反映・Pages公開と公開後の操作確認は承認待ち。
 
 ### 次の作業
 
