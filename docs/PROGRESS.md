@@ -1,6 +1,6 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-24（Asia/Tokyo）。UI-1「操作の骨格」を実装・検証済み。mainへの直接pushは自動承認レビューで拒否され、UI-1の公開配信は未実施。機能ブランチと[PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)へpush済み。
+最終更新: 2026-10-24（Asia/Tokyo）。UI-1「操作の骨格」をmainへ反映し、GitHub Pagesで公開済み。CloudとGitHub Actionsの必須118件、および公開配信を使ったPC・モバイルの一巡と保存復元を確認済み。
 
 ## UI-1：操作の骨格（今回のGoal）
 
@@ -40,7 +40,20 @@ Cloud Chromium・1366×768・Pages本番ビルドで24台の釜を同時稼働�
 
 ### Git・配信状態
 
-実装commitは `30aa8de`。`git push origin HEAD:main`は実行前に自動承認レビューで拒否された。理由は「UI-1完了の依頼だけでは、Pagesの本番配信を起動するdefault mainへのpushが明示的に許可されていない」。リモートmainと公開サイトは変更していない。代わりに `codex/ui-1-workshop-navigation` へ実装と文書をpushし、[Draft PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)を作成した。mainへの反映・Pages公開と公開後の操作確認は承認待ち。
+実装commitは `30aa8de`、文書は `5fcad06` と `672d4c8`。最初のmain直接pushは公開操作の明示許可がないとして自動承認レビューに拒否されたため、機能ブランチとDraft PR #1を用意した。その後、ユーザーが「公開を伴う操作の明示許可は出します」と許可し、[PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)をReadyに変更してmainへmergeした。merge commitは `3d2258e`。承認待ちは解消済み。
+
+[Actions実行 #6](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40104160651)はbuild／deployとも成功。build 1分59秒、deploy 12秒、全体2分18秒。CIログでも単体46件、通常パス36件、Pagesパス36件の合計118件成功を確認した。
+
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+公開HTML・JS・CSS・faviconはすべてHTTP 200。公開JS `index-D3jh19VL.js` とCSS `index-8MIKNMru.css` は、Cloudで検証した本番成果物とのSHA-256一致を確認。2026-10-24 23:51〜23:52（Asia/Tokyo）に以下を確認した。
+
+- PC（1440×900）とモバイル（390×844）：雇用→派遣→別画面を表示中の合成→販売→最初の研究を完了。設備の移動・購入配置と再読込後の保存復元、横はみ出しなしを確認。
+- PCの別タブ：待機中は保存不可、所有タブを閉じると最新状態から所有権を引き継いで保存可能。
+- 別プロファイルの固定v1セーブ：schemaVersion 2へ移行、旧JSONの完全なバックアップ、復元した旧ジョブの完了を確認。
+- ページ例外、console error、リクエスト失敗は0。
+
+公開確認は、継承したプロキシとCAによるTLS検証を保って公開応答を取得し、その応答をChromiumの公開HTTPS originへ渡して操作した。ローカルdistへの差し替えやTLS検証無効化は行っていない。Chromium自身の直接HTTPS経路は今回再評価していない。確認スクリプトは `.cache/ui1-public-check.mjs`、JSON・画面・取得応答は `/tmp/alcemy-ui1-public/` に置き、commitしない。
 
 ### 次の作業
 

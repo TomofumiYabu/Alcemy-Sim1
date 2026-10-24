@@ -4,11 +4,14 @@
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
-- 公開対象は遊べるMVP。派遣・設備配置・自動合成・販売・研究・セーブを実装しています。
-- レビュー対応後はCloud上の単体テスト46件、通常/Pagesパスの実Chromium E2E計48件、型検査・ビルドが成功済みです。
-- 初回はPagesサイト取得404で失敗しましたが、今回の開発着手時点で既存ページのHTTP 200を確認でき、Pages有効化待ちは解消済みです。
-- [レビュー対応の公開実行](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40082109594) はbuild/deployとも成功。公開HTMLはHTTP 200で、レビュー対応後のJS `index-D6AQJSw3.js` を配信していることを確認しました。
-- 公開配信を既存CAでTLS検証して取得し、Chromiumへ渡す方式でデスクトップ/モバイルの一巡と保存復元、複数タブの引き継ぎ、旧v1移行とバックアップを確認。Chromium自身の直接HTTPS経路はCloudプロキシのCA信頼設定で停止したため、直接接続の成功とは扱っていません。詳細は `PROGRESS.md` を参照してください。
+- 公開対象はUI-1を反映したMVP。常設HUD、4画面のナビ、PCの設備詳細、モバイルの下部ナビ・詳細シート、初回案内、キーボード配置を実装。専用アートはUI-2以降。
+- ユーザーの公開許可後、[PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)をmainへmergeした。対象commitは `3d2258e`。
+- [公開実行 #6](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40104160651)はbuild／deployとも成功。build 1分59秒、deploy 12秒、全体2分18秒。Cloud／CIそれぞれで単体46件＋通常パスE2E36件＋PagesパスE2E36件＝118件成功。型検査・本番ビルド成功。
+- 2026-10-24 23:51〜23:52（Asia/Tokyo）に公開HTML／JS／CSS／faviconのHTTP 200を確認。公開JS `index-D3jh19VL.js` とCSS `index-8MIKNMru.css` は、検証した成果物とのSHA-256一致を確認した。
+- 公開応答を使い、PC・モバイルで一巡、設備移動・購入配置、再読込復元を確認。別タブの保存保護と所有権引継ぎ、固定v1セーブの移行・元JSONバックアップ・旧ジョブ完了も確認。ページ／console／リクエストエラーなし。
+- Cloudでは、継承したプロキシとCAによるTLS検証を維持して公開応答を取得し、Chromiumの公開HTTPS originへ渡して操作を検証した。ローカルdistで代用せず、TLS検証無効化も行っていない。Chromium自身の直接HTTPS経路の成否は今回再評価していない。
+
+以前のM1・レビュー公開（実行 #5、94件）の記録は `PROGRESS.md` に残す。UI-1の最新結果と未実施範囲も同文書を参照。
 
 ## 初回設定（設定済み・リポジトリ再作成時の参考）
 
