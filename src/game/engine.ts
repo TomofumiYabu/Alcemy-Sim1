@@ -9,6 +9,7 @@ import {
 import { itemIds } from './types';
 import { GRID_COLUMNS, GRID_ROWS } from './config';
 import { CONTENT_VERSION, currentRules } from './contentVersions';
+import type { GameEvent } from './events';
 import type {
   Adventurer,
   Command,
@@ -191,9 +192,10 @@ export function replacementReason(
 export function applyCommand(
   current: GameState,
   command: Command,
-): { state: GameState; error: string | null } {
+): { state: GameState; error: string | null; events: GameEvent[] } {
   const state = structuredClone(current);
-  const fail = (error: string) => ({ state: current, error });
+  const events: GameEvent[] = [];
+  const fail = (error: string) => ({ state: current, error, events: [] });
   switch (command.type) {
     case 'hire': {
       const adventurer = state.adventurers.find(
@@ -310,6 +312,13 @@ export function applyCommand(
       state.gold += earned;
       state.stats.sold += amount;
       state.stats.earned += earned;
+      events.push({
+        type: 'sold',
+        tick: state.tick,
+        item: command.item,
+        amount,
+        earned,
+      });
       log(
         state,
         `${items[command.item].name}を${amount}個販売し、${earned}金貨を得ました。`,
@@ -323,18 +332,30 @@ export function applyCommand(
       state.gold -= data.gold;
       state.knowledge -= data.knowledge;
       state.research.push(command.id);
+      events.push({ type: 'researched', tick: state.tick, id: command.id });
       log(state, `研究「${data.name}」が完成しました。${data.description}。`);
       break;
     }
   }
-  return { state, error: null };
+  return { state, error: null, events };
 }
 
 export function advanceTicks(current: GameState, count: number): GameState {
+  return advanceWithEvents(current, count).state;
+}
+
+export function advanceWithEvents(
+  current: GameState,
+  count: number,
+): {
+  state: GameState;
+  events: GameEvent[];
+} {
   if (!Number.isSafeInteger(count) || count < 0)
     throw new Error('Tick count must be a nonnegative safe integer');
-  if (count === 0) return current;
+  if (count === 0) return { state: current, events: [] };
   const state = structuredClone(current);
+  const events: GameEvent[] = [];
   const equipment = [...state.equipment].sort((a, b) => a.id - b.id);
   const adventurers = [...state.adventurers].sort((a, b) =>
     a.id.localeCompare(b.id),
@@ -346,6 +367,13 @@ export function advanceTicks(current: GameState, count: number): GameState {
       if (trip && --trip.remaining === 0) {
         for (const item of itemIds) state.inventory[item] += trip.rewards[item];
         state.stats.expeditions++;
+        events.push({
+          type: 'returned',
+          tick: state.tick,
+          adventurerId: adventurer.id,
+          destination: trip.destination,
+          rewards: { ...trip.rewards },
+        });
         log(
           state,
           `${adventurerTypes[adventurer.id].name}が帰還。${itemIds
@@ -363,6 +391,13 @@ export function advanceTicks(current: GameState, count: number): GameState {
         state.inventory[job.recipe]++;
         state.knowledge += job.knowledge;
         state.stats.crafted++;
+        events.push({
+          type: 'crafted',
+          tick: state.tick,
+          equipmentId: entry.id,
+          item: job.recipe,
+          knowledge: job.knowledge,
+        });
         log(state, `${items[job.recipe].name}が完成。知識 +${job.knowledge}。`);
         entry.job = null;
       }
@@ -378,5 +413,5 @@ export function advanceTicks(current: GameState, count: number): GameState {
       entry.job = { ...preview, remaining: preview.total };
     }
   }
-  return state;
+  return { state, events };
 }
