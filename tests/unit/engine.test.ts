@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  adventurerTypes,
   destinations,
   equipmentTypes,
+  items,
   recipes,
   research,
 } from '../../src/game/content';
@@ -392,5 +394,70 @@ describe('research and progression', () => {
       nonnegative(data.knowledge);
     }
     for (const data of Object.values(equipmentTypes)) nonnegative(data.price);
+    for (const data of Object.values(items)) nonnegative(data.price);
+    for (const data of Object.values(adventurerTypes)) nonnegative(data.price);
+  });
+});
+
+describe('reconfiguring a full workshop', () => {
+  it('exchanges a stopped cauldron for a still on the same cell, without losing identity or save compatibility', () => {
+    let state = richGame();
+    state = command(command(state, { type: 'research', id: 'production-1' }), {
+      type: 'research',
+      id: 'production-2',
+    });
+    for (let y = 0; y < 4; y++)
+      for (let x = 0; x < 6; x++) {
+        if (!state.equipment.some((entry) => entry.x === x && entry.y === y))
+          state = command(state, { type: 'buy', kind: 'cauldron', x, y });
+      }
+    const gold = state.gold;
+    const before = state.equipment[0]!;
+    state = command(state, { type: 'replace', id: 1, kind: 'still' });
+    expect(state.equipment).toHaveLength(24);
+    expect(state.gold).toBe(gold - 45);
+    expect(state.equipment[0]).toMatchObject({
+      id: 1,
+      kind: 'still',
+      recipe: 'extract',
+      x: before.x,
+      y: before.y,
+      enabled: false,
+      job: null,
+    });
+    expect(decodeSave(encodeSave(state))).toEqual(state);
+    state = advanceTicks(command(state, { type: 'toggle', id: 1 }), 109);
+    expect(state.inventory.extract).toBe(1);
+  });
+  it('rejects replacement while busy, locked, unaffordable or removing the last cauldron without spending', () => {
+    const locked = createGame();
+    expect(
+      applyCommand(locked, { type: 'replace', id: 1, kind: 'still' }).state,
+    ).toBe(locked);
+    let state = command(
+      command(richGame(), { type: 'research', id: 'production-1' }),
+      { type: 'research', id: 'production-2' },
+    );
+    expect(
+      applyCommand(state, { type: 'replace', id: 1, kind: 'still' }).state,
+    ).toBe(state);
+    state = command(state, { type: 'buy', kind: 'cauldron', x: 0, y: 0 });
+    const poor = { ...state, gold: 44 };
+    expect(
+      applyCommand(poor, { type: 'replace', id: 1, kind: 'still' }).state,
+    ).toBe(poor);
+    state = advanceTicks(command(state, { type: 'toggle', id: 1 }), 1);
+    expect(
+      applyCommand(state, { type: 'replace', id: 1, kind: 'still' }).state,
+    ).toBe(state);
+    state = command(state, { type: 'toggle', id: 1 });
+    expect(
+      applyCommand(state, { type: 'replace', id: 1, kind: 'still' }).state,
+    ).toBe(state);
+    state = advanceTicks(state, 72);
+    state = command(state, { type: 'replace', id: 1, kind: 'still' });
+    expect(
+      applyCommand(state, { type: 'replace', id: 2, kind: 'still' }).state,
+    ).toBe(state);
   });
 });

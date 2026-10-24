@@ -416,6 +416,15 @@ h1 {
   padding-top: 18px;
   margin-top: 20px;
 }
+.equipment-replacement {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.equipment-replacement small {
+  display: block;
+  margin-top: 7px;
+}
 .detail-heading {
   display: flex;
   justify-content: space-between;

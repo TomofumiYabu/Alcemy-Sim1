@@ -106,6 +106,7 @@ export type Command =
   | { type: 'auto'; id: AdventurerId }
   | { type: 'buy'; kind: EquipmentKind; x: number; y: number }
   | { type: 'move'; id: number; x: number; y: number }
+  | { type: 'replace'; id: number; kind: EquipmentKind }
   | { type: 'recipe'; id: number; recipe: RecipeId }
   | { type: 'toggle'; id: number }
   | { type: 'sell'; item: RecipeId }

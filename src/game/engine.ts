@@ -14,6 +14,7 @@ import type {
   Command,
   DestinationId,
   Equipment,
+  EquipmentKind,
   GameState,
   Inventory,
   ItemId,
@@ -166,6 +167,27 @@ function cellReason(
     return '設備があるマスには配置できません';
   return null;
 }
+export function replacementReason(
+  state: GameState,
+  id: number,
+  kind: EquipmentKind,
+): string | null {
+  const entry = state.equipment.find((equipment) => equipment.id === id);
+  if (!entry) return '設備が見つかりません';
+  if (entry.kind === kind) return '同じ種類の設備には交換できません';
+  if (entry.enabled || entry.job)
+    return '自動合成を停止し、現在の合成が終わるまでお待ちください';
+  const target = equipmentTypes[kind];
+  if (!unlocked(state, target.requires)) return '設備の研究が必要です';
+  if (
+    entry.kind === 'cauldron' &&
+    state.equipment.filter((equipment) => equipment.kind === 'cauldron')
+      .length === 1
+  )
+    return '調合釜を1台以上残してください';
+  if (state.gold < target.price) return '設備を交換する金貨が足りません';
+  return null;
+}
 export function applyCommand(
   current: GameState,
   command: Command,
@@ -241,6 +263,23 @@ export function applyCommand(
       if (reason) return fail(reason);
       equipment.x = command.x;
       equipment.y = command.y;
+      break;
+    }
+    case 'replace': {
+      const reason = replacementReason(state, command.id, command.kind);
+      if (reason) return fail(reason);
+      const entry = state.equipment.find(
+        (equipment) => equipment.id === command.id,
+      )!;
+      const target = equipmentTypes[command.kind];
+      const previous = equipmentTypes[entry.kind].name;
+      state.gold -= target.price;
+      entry.kind = command.kind;
+      entry.recipe = target.recipe;
+      log(
+        state,
+        `${previous}を${target.name}に交換しました（${target.price}金貨）。`,
+      );
       break;
     }
     case 'recipe': {

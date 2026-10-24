@@ -11,6 +11,12 @@ export function migrateSave(raw: unknown): GameState {
     raw.schemaVersion === 1
   ) {
     const legacy = legacyV1Schema.parse(raw);
+    if (
+      !legacy.equipment.some(
+        (entry) => entry.id === 1 && entry.kind === 'cauldron',
+      )
+    )
+      throw new Error('Invalid legacy starter equipment');
     return stateSchema.parse({
       ...legacy,
       schemaVersion: 2,

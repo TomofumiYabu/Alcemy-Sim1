@@ -37,11 +37,7 @@ export function decodeSave(text: string): GameState {
     state.nextEquipmentId !==
       Math.max(...state.equipment.map((entry) => entry.id)) + 1,
   );
-  reject(
-    !state.equipment.some(
-      (entry) => entry.id === 1 && entry.kind === 'cauldron',
-    ),
-  );
+  reject(!state.equipment.some((entry) => entry.kind === 'cauldron'));
   for (const entry of state.equipment) {
     reject(!unlocked(state, equipmentTypes[entry.kind].requires));
     reject(

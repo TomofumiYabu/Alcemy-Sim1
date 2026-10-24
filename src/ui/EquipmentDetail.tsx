@@ -3,6 +3,7 @@ import {
   getCraftPreview,
   missingMaterials,
   recipeTicks,
+  replacementReason,
   unlocked,
 } from '../game/engine';
 import { recipeIds } from '../game/types';
@@ -17,6 +18,9 @@ export function EquipmentDetail({
   onMove,
 }: PanelProps & { equipment: Equipment; onMove: () => void }) {
   const preview = getCraftPreview(state, equipment.recipe);
+  const targetKind = equipment.kind === 'cauldron' ? 'still' : 'cauldron';
+  const target = equipmentTypes[targetKind];
+  const exchangeReason = replacementReason(state, equipment.id, targetKind);
   return (
     <div className="equipment-detail" data-testid="equipment-detail">
       <div className="detail-heading">
@@ -106,6 +110,22 @@ export function EquipmentDetail({
       >
         {equipment.enabled ? '次の合成を停止' : '自動合成を開始'}
       </button>
+      <div className="equipment-replacement">
+        <button
+          className="secondary wide"
+          aria-label={`${target.name}へ交換`}
+          disabled={exchangeReason !== null}
+          onClick={() =>
+            send({ type: 'replace', id: equipment.id, kind: targetKind })
+          }
+        >
+          {target.name}へ交換 · {target.price}金貨
+        </button>
+        <small className="muted">
+          {exchangeReason ??
+            '同じマスで交換します。元の設備の返金はありません。'}
+        </small>
+      </div>
     </div>
   );
 }
