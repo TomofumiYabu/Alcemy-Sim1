@@ -4,14 +4,14 @@
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
-- 公開対象はUI-1を反映したMVP。常設HUD、4画面のナビ、PCの設備詳細、モバイルの下部ナビ・詳細シート、初回案内、キーボード配置を実装。専用アートはUI-2以降。
-- ユーザーの公開許可後、[PR #1](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/1)をmainへmergeした。対象commitは `3d2258e`。
-- [公開実行 #6](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40104160651)はbuild／deployとも成功。build 1分59秒、deploy 12秒、全体2分18秒。Cloud／CIそれぞれで単体46件＋通常パスE2E36件＋PagesパスE2E36件＝118件成功。型検査・本番ビルド成功。
-- 2026-10-24 23:51〜23:52（Asia/Tokyo）に公開HTML／JS／CSS／faviconのHTTP 200を確認。公開JS `index-D3jh19VL.js` とCSS `index-8MIKNMru.css` は、検証した成果物とのSHA-256一致を確認した。
-- 公開応答を使い、PC・モバイルで一巡、設備移動・購入配置、再読込復元を確認。別タブの保存保護と所有権引継ぎ、固定v1セーブの移行・元JSONバックアップ・旧ジョブ完了も確認。ページ／console／リクエストエラーなし。
-- Cloudでは、継承したプロキシとCAによるTLS検証を維持して公開応答を取得し、Chromiumの公開HTTPS originへ渡して操作を検証した。ローカルdistで代用せず、TLS検証無効化も行っていない。Chromium自身の直接HTTPS経路の成否は今回再評価していない。
+- 公開対象はUI-2を反映したMVP。UI-1の操作に加え、夜の工房、調合釜、イリス、薬草・清水・傷薬の画像、完成・帰還・販売・研究の一時表示、OS／設定による演出軽減を実装。
+- ユーザーのUI-2公開許可後、[PR #2](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/2)をmainへmergeした。対象commitは `1d15947`。
+- [公開実行 #7](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40112369213)はbuild／deployとも成功。build 2分18秒、deploy 12秒、全体2分35秒。Cloud／CIそれぞれで単体51件＋通常パスE2E48件＋PagesパスE2E48件＝147件成功。型検査・本番ビルド成功。
+- 2026-10-25（Asia/Tokyo）に公開HTML／JS／CSS／favicon／画像6点、計10ファイルのHTTP 200を確認。公開JS `index-Ba_Z1hqR.js`、CSS `index-C48bOYN8.css`、画像すべてが、検証した成果物とSHA-256一致。
+- 公開応答を使い、PC・モバイルで一巡、完成・販売・研究の通知、画像デコード、設備移動・購入配置、再読込復元と通知非再生を確認。別タブの保存保護と所有権引継ぎ、固定v1セーブの移行・元JSONバックアップ・旧ジョブ完了も確認。ページ／console／リクエストエラーなし。
+- Cloudでは、継承したプロキシとCAによるTLS検証を維持して公開応答を取得し、Chromiumの公開HTTPS originへ渡して操作を検証した。画像も公開サイトから取得し、ローカルdistで代用せず、TLS検証無効化も行っていない。Chromium自身の直接HTTPS経路の成否は今回再評価していない。
 
-以前のM1・レビュー公開（実行 #5、94件）の記録は `PROGRESS.md` に残す。UI-1の最新結果と未実施範囲も同文書を参照。
+以前のM1・レビュー公開（実行 #5、94件）、UI-1（実行 #6、118件）の記録は `PROGRESS.md` に残す。UI-2の最新結果、素材記録、未実施範囲も同文書を参照。
 
 ## 初回設定（設定済み・リポジトリ再作成時の参考）
 

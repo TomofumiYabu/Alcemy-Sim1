@@ -1,7 +1,6 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-25（Asia/Tokyo）。UI-2の工房・釜・基本素材・イリスと一巡の演出を実装。Cloudの必須147件成功。[PR #2](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/2)へpush済み。公開は自動承認レビューによる拒否のため保留。
-
+最終更新: 2026-10-25（Asia/Tokyo）。UI-2をmainへ反映し、GitHub Pagesで公開済み。Cloud／CI各147件成功。公開画像6点とJS/CSSの一致、PC・モバイルの一巡・演出・保存復元を確認済み。
 
 ## UI-2：一巡の見た目と反応（今回のGoal）
 
@@ -41,7 +40,20 @@
 
 `4e186f8`（構造化イベント）、`f0ec74e`（アート・演出・E2E）、`d73b6ad`（文書）を機能ブランチへpushし、[PR #2](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/2)を作成した。mainとの競合なし。
 
-PR #2のmergeは、自動承認レビューが「UI-2の依頼は実装を許可しているが、この新しいリリースの公開を明示許可していない」として拒否した。前回の公開許可とは別のリリースと扱われたため、UI-2のmain反映・Pages公開への許可をユーザーへ確認中。リモートmainと公開配信はUI-1のまま。公開後の動作確認は未実行。
+初回のPR #2 mergeは、自動承認レビューが新しいリリースの公開許可を求めて拒否した。その後、ユーザーが「UI-2のマージと公開を許可する」と明示し、[PR #2](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/2)をmainへmergeした。merge commitは `1d15947`。公開の保留は解消済み。
+
+[Actions実行 #7](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40112369213)はbuild／deployとも成功。build 2分18秒、deploy 12秒、全体2分35秒。CIログでも単体51件＋通常パス48件＋Pagesパス48件＝147件成功を確認した。
+
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+2026-10-25（Asia/Tokyo）に公開HTML、JS、CSS、faviconと製品画像6点の計10ファイルでHTTP 200を確認。公開JS `index-Ba_Z1hqR.js`、CSS `index-C48bOYN8.css`、全画像のSHA-256は検証した成果物と一致した。
+
+- PC（1440×900）・モバイル（390×844）：雇用→派遣→合成→販売→研究、設備の移動・購入配置、再読込後の保存復元を確認。画像のデコード成功、完成・販売・研究の結果通知、再読込時の通知非再生、ページ全体の横はみ出しなしを確認。
+- PCの別タブ：待機中の保存保護と、所有タブを閉じた後の最新状態からの引き継ぎを確認。
+- 別プロファイルの固定v1セーブ：schemaVersion 2への移行、元JSONの完全なバックアップ、旧ジョブの完了を確認。
+- ページ例外、console error、リクエスト失敗は0。
+
+公開確認は継承したプロキシとCAでTLS検証を保って公開応答を取得し、その応答をChromiumの公開HTTPS originへ渡して行った。画像も公開サイトから取得し、ローカルdistへの差し替えやTLS検証無効化は行っていない。Chromium自身の直接HTTPS経路は今回再評価していない。確認スクリプトは `.cache/ui2-public-check.mjs`、JSON・画面・取得応答は `/tmp/alcemy-ui2-public/` に置き、commitしない。
 
 ### UI-2の残る範囲
 
