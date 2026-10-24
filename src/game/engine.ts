@@ -76,15 +76,34 @@ export function recipeTicks(state: GameState, recipe: RecipeId): number {
   return Math.round(recipes[recipe].ticks * multiplier);
 }
 export const salePrice = (state: GameState, item: RecipeId) =>
-  Math.floor(items[item].price * (unlocked(state, 'knowledge-3') ? currentRules.saleMultiplier : 1));
+  Math.floor(
+    items[item].price *
+      (unlocked(state, 'knowledge-3') ? currentRules.saleMultiplier : 1),
+  );
 export function getCraftPreview(state: GameState, recipe: RecipeId) {
-  return { contentVersion: CONTENT_VERSION, recipe, total: recipeTicks(state, recipe), knowledge: recipes[recipe].knowledge + (unlocked(state, 'knowledge-1') ? currentRules.knowledgeBonus : 0) };
+  return {
+    contentVersion: CONTENT_VERSION,
+    recipe,
+    total: recipeTicks(state, recipe),
+    knowledge:
+      recipes[recipe].knowledge +
+      (unlocked(state, 'knowledge-1') ? currentRules.knowledgeBonus : 0),
+  };
 }
-export function getExpeditionPreview(state: GameState, destination: DestinationId) {
+export function getExpeditionPreview(
+  state: GameState,
+  destination: DestinationId,
+) {
   const data = destinations[destination];
   const rewards = { ...emptyInventory(), ...data.rewards };
-  if (destination === 'forest' && unlocked(state, 'gathering-1')) rewards.herb += currentRules.forestBonus;
-  return { contentVersion: CONTENT_VERSION, destination, total: data.ticks, rewards };
+  if (destination === 'forest' && unlocked(state, 'gathering-1'))
+    rewards.herb += currentRules.forestBonus;
+  return {
+    contentVersion: CONTENT_VERSION,
+    destination,
+    total: data.ticks,
+    rewards,
+  };
 }
 export function missingMaterials(
   state: GameState,

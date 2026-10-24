@@ -10,7 +10,12 @@
   --border: #34453b;
   --panel: #1b2a24;
 }
-.game-controls { border: 0; margin: 0; padding: 0; min-width: 0; }
+.game-controls {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 * {
   box-sizing: border-box;
 }
@@ -328,7 +333,6 @@ h1 {
   border: 1px solid #4a4b35;
   border-radius: 5px;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
   margin: 20px 0 15px;
   box-shadow: inset 0 0 25px #0005;

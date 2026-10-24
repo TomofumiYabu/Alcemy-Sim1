@@ -4,11 +4,7 @@ import {
   recipes,
   research,
 } from '../game/content';
-import {
-  createGame,
-  emptyInventory,
-  unlocked,
-} from '../game/engine';
+import { createGame, emptyInventory, unlocked } from '../game/engine';
 import { itemIds } from '../game/types';
 import type { GameState } from '../game/types';
 import { CONTENT_VERSION, contentVersions } from '../game/contentVersions';
@@ -59,7 +55,15 @@ export function decodeSave(text: string): GameState {
       const recipe = rules.recipes[job.recipe];
       reject(job.recipe !== entry.recipe || job.remaining > job.total);
       reject(
-        job.total < Math.round(recipe.ticks * (unlocked(state, 'production-3') ? rules.production.final : unlocked(state, 'production-1') ? rules.production.first : 1)) ||
+        job.total <
+          Math.round(
+            recipe.ticks *
+              (unlocked(state, 'production-3')
+                ? rules.production.final
+                : unlocked(state, 'production-1')
+                  ? rules.production.first
+                  : 1),
+          ) ||
           ![
             recipe.ticks,
             Math.round(recipe.ticks * rules.production.first),
@@ -146,8 +150,13 @@ export function saveGame(
   try {
     const previous = storage.getItem(SAVE_KEY);
     let legacy = false;
-    try { legacy = previous !== null && JSON.parse(previous)?.schemaVersion === 1; } catch { /* explicit reset can replace corrupt data */ }
-    if (legacy && storage.getItem(LEGACY_BACKUP_KEY) === null) storage.setItem(LEGACY_BACKUP_KEY, previous!);
+    try {
+      legacy = previous !== null && JSON.parse(previous)?.schemaVersion === 1;
+    } catch {
+      /* explicit reset can replace corrupt data */
+    }
+    if (legacy && storage.getItem(LEGACY_BACKUP_KEY) === null)
+      storage.setItem(LEGACY_BACKUP_KEY, previous!);
     storage.setItem(SAVE_KEY, encodeSave(state));
     return null;
   } catch {

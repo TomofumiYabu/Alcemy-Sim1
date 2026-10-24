@@ -352,7 +352,7 @@ describe('research and progression', () => {
       for (const id of researchIds)
         if (research[id].requires.every((entry) => seen.has(entry)))
           seen.add(id);
-    expect(seen.size).toBe(9);
+    expect(seen.size).toBe(researchIds.length);
     const visit = (id: (typeof researchIds)[number], ancestors: string[]) => {
       expect(ancestors).not.toContain(id);
       for (const prerequisite of research[id].requires)
@@ -368,5 +368,29 @@ describe('research and progression', () => {
     for (const destination of Object.values(destinations))
       for (const id of Object.keys(destination.rewards))
         expect(itemIds).toContain(id);
+  });
+  it('keeps content quantities, durations and economic values finite and valid', () => {
+    const positive = (value: number) => {
+      expect(Number.isSafeInteger(value)).toBe(true);
+      expect(value).toBeGreaterThan(0);
+    };
+    const nonnegative = (value: number) => {
+      expect(Number.isSafeInteger(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+    };
+    for (const data of Object.values(recipes)) {
+      positive(data.ticks);
+      positive(data.knowledge);
+      for (const amount of Object.values(data.inputs)) positive(amount);
+    }
+    for (const data of Object.values(destinations)) {
+      positive(data.ticks);
+      for (const amount of Object.values(data.rewards)) positive(amount);
+    }
+    for (const data of Object.values(research)) {
+      nonnegative(data.gold);
+      nonnegative(data.knowledge);
+    }
+    for (const data of Object.values(equipmentTypes)) nonnegative(data.price);
   });
 });

@@ -14,22 +14,32 @@ export function createSaveSession(
   if (!locks) roleChanged('unsupported');
   else {
     roleChanged('waiting');
-    void locks.request(SAVE_LOCK, { signal: abort.signal }, async () => {
-      if (!active) return;
-      owner = true;
-      await new Promise<void>((resolve) => {
-        release = resolve;
-        acquired();
-        roleChanged('owner');
+    void locks
+      .request(SAVE_LOCK, { signal: abort.signal }, async () => {
+        if (!active) return;
+        owner = true;
+        await new Promise<void>((resolve) => {
+          release = resolve;
+          acquired();
+          roleChanged('owner');
+        });
+        owner = false;
+      })
+      .catch(() => {
+        if (active) {
+          owner = false;
+          roleChanged('unsupported');
+        }
       });
-      owner = false;
-    }).catch(() => {
-      if (active) { owner = false; roleChanged('unsupported'); }
-    });
   }
   return {
     isOwner: () => active && owner,
-    dispose: () => { active = false; owner = false; abort.abort(); release?.(); },
+    dispose: () => {
+      active = false;
+      owner = false;
+      abort.abort();
+      release?.();
+    },
   };
 }
 export type SaveSession = ReturnType<typeof createSaveSession>;

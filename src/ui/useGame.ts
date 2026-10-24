@@ -50,20 +50,36 @@ export function useGame() {
   useEffect(() => {
     const reload = () => {
       let loaded;
-      try { loaded = loadGame(window.localStorage); }
-      catch { loaded = { state: createGame(), blocked: true, message: '保存領域を読み込めません。' }; }
-      update(loaded.state); blockedRef.current = loaded.blocked;
-      setBlocked(loaded.blocked); setSaveError(loaded.message); setSaved(false);
+      try {
+        loaded = loadGame(window.localStorage);
+      } catch {
+        loaded = {
+          state: createGame(),
+          blocked: true,
+          message: '保存領域を読み込めません。',
+        };
+      }
+      update(loaded.state);
+      blockedRef.current = loaded.blocked;
+      setBlocked(loaded.blocked);
+      setSaveError(loaded.message);
+      setSaved(false);
     };
     const connect = () => {
       if (session.current) return;
       let locks: LockManager | undefined;
-      try { locks = navigator.locks; } catch { /* unavailable in this browser */ }
+      try {
+        locks = navigator.locks;
+      } catch {
+        /* unavailable in this browser */
+      }
       session.current = createSaveSession(locks, reload, setRole);
     };
     const leave = () => {
       persist(current.current);
-      session.current?.dispose(); session.current = null; setRole('waiting');
+      session.current?.dispose();
+      session.current = null;
+      setRole('waiting');
     };
     const changed = (event: StorageEvent) => {
       if (event.key === SAVE_KEY && !session.current?.isOwner()) reload();
