@@ -16,7 +16,7 @@ const results = {
   commit: options.commit,
   url,
   transport:
-    'Public responses fetched by curl with inherited proxy and CA validation, then passed to Chromium at the public HTTPS origin',
+    'HTTP responses fetched by curl with inherited proxy and CA validation, then passed to Chromium at the public HTTPS origin',
   artifacts: [],
   checks: [],
   errors: [],
