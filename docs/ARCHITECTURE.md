@@ -4,7 +4,7 @@
 
 - React 19 + TypeScript + Vite。本番成果物は `dist/` の静的ファイル。
 - `src/main.tsx`: Reactアプリケーション起動。
-- `src/ui/App.tsx`: 常設HUD、4画面の切替、案内からのフォーカス移動、設定・記録の統合。`useGame`はここで1回だけ起動し、画面切替でも保持する。
+- `src/ui/App.tsx` / `navigation.ts`: 常設HUD、型付きの移動要求、設定・記録の統合。対象は研究ID・設備種別・探索先等で指定し、各パネルがDOM参照とフォーカスを所有する。無効な操作対象にはカードや見出しへフォールバックする。`useGame`は1回だけ起動し、画面切替でも保持する。
 - `src/ui/WorkshopPanel.tsx`: 設備選択、購入・移動モード、roving tabindexと矢印によるマス移動。PCは右側の詳細、1000px以下は詳細シートへ切り替える。
 - `src/ui/Dialog.tsx` / `useCompactLayout.ts`: native dialogのフォーカス制限・Escape・復帰と、CSSに合わせた詳細表示の切替。ゲーム変更の無効化をシートの閉じる操作から分ける。
 - `src/ui/useGame.ts`: ゲーム状態と実時計、自動保存、可視性変更の接続。一時イベントを表示層へ渡す。
@@ -17,13 +17,14 @@
 - `src/persistence/save.ts`: 移行後の検証、読み書き、旧JSONのバックアップと復旧。
 - `src/persistence/session.ts`: Web Locksによる書き込み所有権と解放。
 - `src/persistence/migrate.ts` / `legacyV1.ts`: 凍結した旧schemaからの明示的な移行。
-- `src/game/contentVersions.ts`: 公開済み数値ルールの履歴。
+- `src/game/contentVersions.ts` / `workRules.ts`: 公開済み数値ルールの履歴と、合成・探索の確定結果を計算・検証する純粋関数。
 - `src/game/config.ts`: 工房寸法と容量。
 - `tests/unit/`: Vitestで経済・時間・研究・保存を検証。
 - `tests/e2e/`: 本番ビルドを実Chromiumで操作し、一巡・製造・研究・破損復旧・保存失敗・非表示停止を検証。
 - `scripts/setup.sh`: 書き込み可能なキャッシュを利用する `npm ci` とChromium確認。
+- `scripts/benchmark.mjs` / `public-smoke.mjs`: 実エンジンから合法なfixtureを生成する性能・配信検証。条件と使い方は `scripts/README.md`。取得応答と結果はGit対象外へ出す。
 - `package-lock.json`: exact指定した直接依存と推移的依存を固定。導入済みバージョンの正本。
-- `.github/workflows/pages.yml`: mainへのpush/手動実行で検証・Pages公開。Node/npmを固定し、テストで検証した `dist/` だけを配信。第三者Actionは公式リリースのcommit SHAに固定。
+- `.github/workflows/pages.yml`: PRで読み取り権限の検証を実行し、mainのpush/手動実行だけが検証済み `dist/` を公開する。PR別のconcurrencyを使い、配信を占有しない。Node/npmと第三者Actionのcommit SHAを固定。
 
 通常の開発ではルートパスを使い、Pagesビルドでは `VITE_BASE_PATH=/Alcemy-Sim1/` を指定。`npm run check` は両パスでビルドとE2Eを実行し、最後にPages配信用成果物を残します。公開に必要な権限はdeployジョブだけに付け、初回のPages有効化はリポジトリ設定で行います。
 
@@ -73,6 +74,18 @@ localStorageにはschemaVersion 2とcontentVersion、ゲーム状態を保存し
 演出イベントはGameStateへ入れず、実処理の戻り値からUIへ渡します。読み込みから過去ログを再生せず、ページ非表示・初期化・所有権取得時に一時表示を消します。演出軽減時は静的な結果と状態を保持します。
 
 合成と派遣の表示プレビューはジョブ生成と同じ関数を使います。数値を変更する場合は履歴エントリを追加してCONTENT_VERSIONを進めます。既存エントリを編集すると旧セーブの契約を壊すため禁止です。固定v1 fixtureと現行定義/履歴の一致テストを維持します。
+
+### 仕事の計算と履歴検証
+
+`workRules.ts`の`craftOutcome`と`expeditionOutcome`は、基準値・研究・ルールを受け取り、合成時間／知識と派遣時間／報酬を返す。新しい仕事は現在のカタログ、進行中の仕事の検証はそのcontentVersionの凍結した基準値を渡す。現在のカタログを変えても、過去の仕事は巻き戻さない。
+
+研究は増えるため、保存した仕事が開始した時点では未購入だった研究もある。`isCapturedCraftValid`と`isCapturedExpeditionValid`は現在の研究を前提として合法な過去の結果を検証し、現在の結果への完全一致を要求しない。現行の許容時間・知識・報酬の範囲は維持し、未知versionや不整合値を拒否する。固定v2 fixtureと許容／拒否の境界テストも残す。今回、schemaVersion 2とcontentVersion 1の値は変更しない。
+
+### M2で追加効果を入れる際の判断
+
+隣接効果など、研究以外の条件が時間・報酬へ影響する場合、開始後の配置から再計算してはならない。追加効果の仕様を定めた時点で、開始時の効果を説明できる最小の情報（効果種別・適用元・開始時の数など）と確定結果を保存し、そのversionで合法な組合せを検証する。任意の倍率だけを受け入れる方式は採らない。
+
+追加情報が必須になる場合は公開済みv2 schemaを凍結し、次schemaへの明示移行と移行前データの保護を実装する。既存v2の仕事は旧versionの確定値で完了させ、新しい効果を遡及させない。「開始→配置／研究の変更→保存→再読込→完了」を境界テストにする。新しい効果・開始条件・schemaの実装はM2以降で行い、今回の共通化では検証を緩めない。
 
 MVPでは端末間同期やオフライン加算は行いません。セーブは各ブラウザーに依存するため、将来必要ならJSONのインポート/エクスポートを追加します。CloudのE2Eテストは隔離されたブラウザープロファイルで動き、ユーザーのゲーム保存とは共有しません。
 

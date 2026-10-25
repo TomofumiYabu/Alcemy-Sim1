@@ -4,11 +4,14 @@ import {
   recipes,
   research,
 } from '../game/content';
-import { createGame, emptyInventory, unlocked } from '../game/engine';
-import { itemIds } from '../game/types';
+import { createGame, unlocked } from '../game/engine';
 import type { GameState } from '../game/types';
 import { CONTENT_VERSION, contentVersions } from '../game/contentVersions';
 import { migrateSave } from './migrate';
+import {
+  isCapturedCraftValid,
+  isCapturedExpeditionValid,
+} from '../game/workRules';
 
 export const SAVE_KEY = 'alcemy-sim-save-v1';
 export const LEGACY_BACKUP_KEY = `${SAVE_KEY}-legacy-backup`;
@@ -48,30 +51,9 @@ export function decodeSave(text: string): GameState {
       const job = entry.job;
       const rules = contentVersions[job.contentVersion];
       if (!rules) throw new Error('Unknown job content version');
-      const recipe = rules.recipes[job.recipe];
-      reject(job.recipe !== entry.recipe || job.remaining > job.total);
       reject(
-        job.total <
-          Math.round(
-            recipe.ticks *
-              (unlocked(state, 'production-3')
-                ? rules.production.final
-                : unlocked(state, 'production-1')
-                  ? rules.production.first
-                  : 1),
-          ) ||
-          ![
-            recipe.ticks,
-            Math.round(recipe.ticks * rules.production.first),
-            Math.round(recipe.ticks * rules.production.final),
-          ].includes(job.total),
-      );
-      reject(
-        job.knowledge !== recipe.knowledge &&
-          !(
-            unlocked(state, 'knowledge-1') &&
-            job.knowledge === recipe.knowledge + rules.knowledgeBonus
-          ),
+        job.recipe !== entry.recipe ||
+          !isCapturedCraftValid(job, state.research, rules),
       );
     }
   }
@@ -86,23 +68,10 @@ export function decodeSave(text: string): GameState {
       const trip = entry.trip;
       const rules = contentVersions[trip.contentVersion];
       if (!rules) throw new Error('Unknown trip content version');
-      const data = rules.destinations[trip.destination];
       reject(
         (trip.destination === 'ruins' && !unlocked(state, 'gathering-3')) ||
-          trip.total !== data.ticks ||
-          trip.remaining > trip.total,
+          !isCapturedExpeditionValid(trip, state.research, rules),
       );
-      const expected = { ...emptyInventory(), ...data.rewards };
-      for (const id of itemIds) {
-        if (
-          id === 'herb' &&
-          trip.destination === 'forest' &&
-          unlocked(state, 'gathering-1') &&
-          trip.rewards.herb === (data.rewards.herb ?? 0) + rules.forestBonus
-        )
-          continue;
-        reject(trip.rewards[id] !== expected[id]);
-      }
     }
   }
   reject(state.log.some((entry) => entry.tick > state.tick));

@@ -9,6 +9,8 @@ import {
 import { itemIds } from './types';
 import { GRID_COLUMNS, GRID_ROWS } from './config';
 import { CONTENT_VERSION, currentRules } from './contentVersions';
+import { craftOutcome, emptyInventory, expeditionOutcome } from './workRules';
+export { emptyInventory } from './workRules';
 import type { GameEvent } from './events';
 import type {
   Adventurer,
@@ -17,21 +19,12 @@ import type {
   Equipment,
   EquipmentKind,
   GameState,
-  Inventory,
   ItemId,
   RecipeId,
   ResearchId,
 } from './types';
 
 export const TICK_MS = 100;
-export const emptyInventory = (): Inventory => ({
-  herb: 0,
-  water: 0,
-  crystal: 0,
-  potion: 0,
-  extract: 0,
-  mana: 0,
-});
 export function createGame(): GameState {
   return {
     schemaVersion: 2,
@@ -70,12 +63,7 @@ export function createGame(): GameState {
 export const unlocked = (state: GameState, id: ResearchId | null) =>
   id === null || state.research.includes(id);
 export function recipeTicks(state: GameState, recipe: RecipeId): number {
-  const multiplier = unlocked(state, 'production-3')
-    ? currentRules.production.final
-    : unlocked(state, 'production-1')
-      ? currentRules.production.first
-      : 1;
-  return Math.round(recipes[recipe].ticks * multiplier);
+  return craftOutcome(recipes[recipe], state.research, currentRules).total;
 }
 export const salePrice = (state: GameState, item: RecipeId) =>
   Math.floor(
@@ -86,25 +74,22 @@ export function getCraftPreview(state: GameState, recipe: RecipeId) {
   return {
     contentVersion: CONTENT_VERSION,
     recipe,
-    total: recipeTicks(state, recipe),
-    knowledge:
-      recipes[recipe].knowledge +
-      (unlocked(state, 'knowledge-1') ? currentRules.knowledgeBonus : 0),
+    ...craftOutcome(recipes[recipe], state.research, currentRules),
   };
 }
 export function getExpeditionPreview(
   state: GameState,
   destination: DestinationId,
 ) {
-  const data = destinations[destination];
-  const rewards = { ...emptyInventory(), ...data.rewards };
-  if (destination === 'forest' && unlocked(state, 'gathering-1'))
-    rewards.herb += currentRules.forestBonus;
   return {
     contentVersion: CONTENT_VERSION,
     destination,
-    total: data.ticks,
-    rewards,
+    ...expeditionOutcome(
+      destinations[destination],
+      destination,
+      state.research,
+      currentRules,
+    ),
   };
 }
 export function missingMaterials(
