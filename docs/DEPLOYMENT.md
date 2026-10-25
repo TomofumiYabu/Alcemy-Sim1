@@ -2,6 +2,8 @@
 
 ## 公開対象と状態
 
+今回のリファクタリングは [PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4) に実装・push済み。ローカルと最終実装CIは各202件成功。mainへのmergeは今回分の明示許可がないとして自動承認レビューが拒否し、反映・配信・公開後確認は保留中。以下は現在も公開中のUI-3／UI-4の実績。詳細は [リファクタリング対応記録](REFACTOR-RESULTS-2026-10-25.md) を参照。
+
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 - 公開対象はUI-1〜UI-4を反映したMVP。全設備・人物・アイテム・探索先の専用画像、素材不足と研究の導線、移動・交換、通知、保存する表示・音の設定を実装。

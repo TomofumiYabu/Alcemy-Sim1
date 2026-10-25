@@ -51,9 +51,9 @@ Cloud Chromium、1366×768、演出あり、新しいブラウザープロファ
 
 ## Git・CI・公開
 
-[draft PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)を作成してこのチャットへ添付済み。RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は単体59件＋通常60件＋Pages60件＝179件成功、deployはskipped。全アプリ変更を含む `ae6997b` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40201658070)も単体66件＋通常68件＋Pages68件＝202件成功をログで確認し、成果物uploadとdeployはskipped。検証メタデータ・文書更新後の最終headの状態も確認する。
+[PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)を作成してこのチャットへ添付済み。RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は単体59件＋通常60件＋Pages60件＝179件成功、deployはskipped。全アプリ変更を含む `ae6997b` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40201658070)も単体66件＋通常68件＋Pages68件＝202件成功をログで確認し、成果物uploadとdeployはskipped。検証メタデータを含む最終実装head `241798f` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40202126969)も単体66＋通常68＋Pages68＝202件成功、deploy skipped。ログとジョブ状態で確認済み。PRはdraftで作成し、検証後にreadyへ変更した。
 
-マージ・公開の操作はまだ実行していない。現在の公開版はUI-3／UI-4。ローカル本番previewでのsmokeと、今回分の公開サイトの検証を混同しない。公開する場合は配信成功後に検証したdistを用い、追跡したpublic-smokeで配信ファイルの一致・操作・保存互換性を確認する。
+PR #4のmergeを1回実行したが、自動承認レビューに拒否された。理由は「確認できる明示許可はUI-2およびUI-3/UI-4に限定され、今回のリファクタリングPRのマージ許可はない」。mainへの反映がPages配信を起動するため、今回分の明示許可待ちとして保留する。別経路で再試行していない。APIでPRがopen・未merge、mainが `e64c4c1` のままであることを確認した。結果不明ではない。現在の公開版はUI-3／UI-4で、今回の配信と公開後smokeは未実施。ローカル本番previewでのsmokeと、今回分の公開サイトの検証を混同しない。公開する場合は配信成功後に検証したdistを用い、追跡したpublic-smokeで配信ファイルの一致・操作・保存互換性を確認する。
 
 ## 失敗と修正の記録
 
