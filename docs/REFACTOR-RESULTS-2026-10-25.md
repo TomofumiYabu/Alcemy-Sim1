@@ -38,20 +38,20 @@ schemaVersion 2、contentVersion 1と公開済み履歴の数値、凍結v1、�
 
 | 24設備・同条件 | 変更前 | 最終版 |
 | --- | --- | --- |
-| 切替ハンドラ→次の描画（20回）平均 | 21.1ms | 20.0ms |
-| p95／最大 | 35.7ms／41.6ms | 34.2ms／35.4ms |
+| 切替ハンドラ→次の描画（20回）平均 | 21.1ms | 19.4ms |
+| p95／最大 | 35.7ms／41.6ms | 33.4ms／33.5ms |
 | 初回転送 | 555,594 bytes | 555,901 bytes |
 | 完成・継続 | 傷薬12＋エキス12、24台稼働 | 傷薬12＋エキス12、24台稼働 |
 | ページ・console・リクエストエラー | 0 | 0 |
 
-Cloud Chromium、1366×768、演出あり、新しいブラウザープロファイル、全画像を要求する同じfixtureで比較した。未雇用時に森画像を読まなかった旧納品計測の転送量とは条件が異なる。この条件で悪化は観測せず、転送増分は307 bytes。単発値から全端末の高速化や60fpsを主張しない。RF-4直後の参考測定（18.9ms／p95 33.2ms）とは区別し、上表は式の修正も含む最終版。検証したPages成果物はJS `index-AjZrmwJK.js`、CSS `index-ClSbRIua.css`。
+Cloud Chromium、1366×768、演出あり、新しいブラウザープロファイル、全画像を要求する同じfixtureで比較した。未雇用時に森画像を読まなかった旧納品計測の転送量とは条件が異なる。この条件で悪化は観測せず、転送増分は307 bytes。単発値から全端末の高速化や60fpsを主張しない。RF-4直後の参考測定（18.9ms／p95 33.2ms）、式修正後の測定（20.0ms／p95 34.2ms）も保持する。上表は検証記録に作業ツリーとビルド識別情報を追加した後の、cleanな `eb56623` での最終測定。基準値はアプリ変更前の `fbd900f` に未commitの計測スクリプトを加えた状態で取得した。検証したPages成果物はJS `index-AjZrmwJK.js`、CSS `index-ClSbRIua.css`、HTML SHA-256 `8a0962937a75e5dee8b9bf2c6df7aab0951b8da7948f198c68ba2b7cabba9666`。
 
 
 検証ソースは `scripts/`、条件・手順は [scripts/README](../scripts/README.md)。結果、取得応答、画面、trace等は `.cache/verification/`・`/tmp/alcemy-refactor-*`・`test-results/`へ保持し、commitしない。
 
 ## Git・CI・公開
 
-[draft PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)を作成してこのチャットへ添付済み。RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は単体59件＋通常60件＋Pages60件＝179件成功、deployはskipped。後続実装を含む最終headのCI結果を確認する。
+[draft PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)を作成してこのチャットへ添付済み。RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は単体59件＋通常60件＋Pages60件＝179件成功、deployはskipped。全アプリ変更を含む `ae6997b` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40201658070)も単体66件＋通常68件＋Pages68件＝202件成功をログで確認し、成果物uploadとdeployはskipped。検証メタデータ・文書更新後の最終headの状態も確認する。
 
 マージ・公開の操作はまだ実行していない。現在の公開版はUI-3／UI-4。ローカル本番previewでのsmokeと、今回分の公開サイトの検証を混同しない。公開する場合は配信成功後に検証したdistを用い、追跡したpublic-smokeで配信ファイルの一致・操作・保存互換性を確認する。
 
