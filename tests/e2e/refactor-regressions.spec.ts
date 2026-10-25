@@ -93,3 +93,38 @@ test('a failed destination image can be replaced by another successfully loaded 
     )
     .toBeGreaterThan(0);
 });
+
+test('research routes focus purchases and equipment without buying or changing a recipe', async ({
+  page,
+  isMobile,
+}) => {
+  const state = createGame();
+  state.gold = 1000;
+  state.research = [...researchIds];
+  await open(page, state);
+  await go(page, '研究');
+  await page
+    .getByRole('button', { name: '蒸留器の配置を開く →', exact: true })
+    .click();
+  await expect(
+    page.getByRole('button', { name: '蒸留器を購入・配置', exact: true }),
+  ).toBeFocused();
+  await expect(page.getByTestId('gold')).toHaveText('1,000');
+  await go(page, '研究');
+  await page
+    .getByRole('button', { name: '釜で魔力薬を作る →', exact: true })
+    .click();
+  await expect(page.getByLabel('合成するレシピ', { exact: true })).toHaveValue(
+    'potion',
+  );
+  await expect(page.getByTestId('gold')).toHaveText('1,000');
+  if (isMobile) {
+    await page.keyboard.press('Escape');
+    await expect(
+      page.getByRole('button', { name: '調合釜 #1', exact: true }),
+    ).toBeFocused();
+  } else
+    await expect(
+      page.getByRole('button', { name: '自動合成を開始', exact: true }),
+    ).toBeFocused();
+});

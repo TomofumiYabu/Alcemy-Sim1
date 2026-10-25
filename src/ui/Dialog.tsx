@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 /** Native modal: focus trapping, Escape and background inertness stay in the browser. */
 export function Dialog({
@@ -8,12 +8,14 @@ export function Dialog({
   onClose,
   children,
   sheet = false,
+  returnFocus,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   sheet?: boolean;
+  returnFocus?: RefObject<HTMLElement | null>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -26,8 +28,9 @@ export function Dialog({
     element.showModal();
     return () => {
       element.close();
-      if (previous instanceof HTMLElement && previous.isConnected)
-        previous.focus();
+      const restored = returnFocus?.current ?? previous;
+      if (restored instanceof HTMLElement && restored.isConnected)
+        restored.focus();
     };
   }, [open]);
   return (

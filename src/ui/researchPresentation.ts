@@ -5,7 +5,7 @@ import {
 } from '../game/engine';
 import type { GameState, ResearchId } from '../game/types';
 import { seconds } from './format';
-import type { MaterialSource } from './materialSources';
+import type { GuidedAction } from './navigation';
 import type { IconName } from './Icon';
 
 export const researchIcons: Record<ResearchId, IconName> = {
@@ -36,25 +36,30 @@ export function researchExample(state: GameState, id: ResearchId): string {
   if (id === 'production-2') return '薬草からエキスを作る生産工程が開く';
   return '薬草エキスと魔晶片から魔力薬を合成';
 }
-export const researchAction: Partial<Record<ResearchId, MaterialSource>> = {
+export const researchAction: Partial<Record<ResearchId, GuidedAction>> = {
   'gathering-2': {
-    screen: 'expeditions',
-    target: '',
+    navigation: { screen: 'expeditions' },
     label: '自動再派遣を設定する',
   },
   'gathering-3': {
-    screen: 'expeditions',
-    target: 'expedition:ruins',
+    navigation: {
+      screen: 'expeditions',
+      target: { type: 'destination', destination: 'ruins' },
+    },
     label: '遺跡への派遣を開く',
   },
   'production-2': {
-    screen: 'workshop',
-    target: '[aria-label="蒸留器を購入・配置"]',
+    navigation: {
+      screen: 'workshop',
+      target: { type: 'purchase', kind: 'still' },
+    },
     label: '蒸留器の配置を開く',
   },
   'knowledge-2': {
-    screen: 'workshop',
-    target: 'equipment:cauldron',
+    navigation: {
+      screen: 'workshop',
+      target: { type: 'equipment', kind: 'cauldron' },
+    },
     label: '釜で魔力薬を作る',
   },
 };

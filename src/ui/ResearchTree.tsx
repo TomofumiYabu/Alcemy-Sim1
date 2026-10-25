@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { research } from '../game/content';
 import { researchReason } from '../game/engine';
 import { researchIds } from '../game/types';
 import type { ResearchId } from '../game/types';
 import type { Navigate, PanelProps } from './types';
+import { focusTarget } from './navigation';
+import type { NavigationRequest } from './navigation';
 import { Icon } from './Icon';
 import {
   researchAction,
@@ -16,13 +18,30 @@ export function ResearchTree({
   state,
   send,
   navigate,
-}: PanelProps & { navigate: Navigate }) {
+  request,
+}: PanelProps & {
+  navigate: Navigate;
+  request: NavigationRequest<'research'> | null;
+}) {
   const [highlighted, setHighlighted] = useState<ResearchId | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const cards = useRef<Partial<Record<ResearchId, HTMLElement | null>>>({});
+  const buttons = useRef<Partial<Record<ResearchId, HTMLButtonElement | null>>>(
+    {},
+  );
+  useEffect(() => {
+    if (!request) return;
+    if (request.target) {
+      setHighlighted(request.target.id);
+      focusTarget(
+        buttons.current[request.target.id],
+        cards.current[request.target.id] ?? heading.current,
+      );
+    } else focusTarget(heading.current, null, false);
+  }, [request]);
   const focusPrerequisite = (id: ResearchId) => {
     setHighlighted(id);
-    document
-      .querySelector<HTMLElement>(`[data-testid="research-${id}"]`)
-      ?.focus();
+    focusTarget(cards.current[id], heading.current);
   };
   return (
     <section
@@ -33,7 +52,7 @@ export function ResearchTree({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">KNOWLEDGE TREE</p>
-          <h2 id="research-title" tabIndex={-1}>
+          <h2 ref={heading} id="research-title" tabIndex={-1}>
             錬金術の研究
           </h2>
         </div>
@@ -73,6 +92,9 @@ export function ResearchTree({
                 );
                 return (
                   <article
+                    ref={(node) => {
+                      cards.current[id] = node;
+                    }}
                     tabIndex={-1}
                     className={`research-card ${done ? 'researched' : ''} ${!reason ? 'available' : ''} ${highlighted === id ? 'research-highlighted' : ''}`}
                     key={id}
@@ -169,6 +191,9 @@ export function ResearchTree({
                     )}
                     <button
                       className={done ? 'subtle wide' : 'secondary wide'}
+                      ref={(node) => {
+                        buttons.current[id] = node;
+                      }}
                       aria-label={`${data.name}を研究`}
                       disabled={reason !== null}
                       onClick={() => send({ type: 'research', id })}
@@ -181,7 +206,7 @@ export function ResearchTree({
                     {done && action && (
                       <button
                         className="subtle wide unlock-action"
-                        onClick={() => navigate(action.screen, action.target)}
+                        onClick={() => navigate(action.navigation)}
                       >
                         {action.label} →
                       </button>

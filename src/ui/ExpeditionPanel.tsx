@@ -7,6 +7,8 @@ import type { Navigate, PanelProps } from './types';
 import { CharacterPortrait, DestinationArtwork, ItemArtwork } from './Artwork';
 import type { ItemId } from '../game/types';
 import type { Feedback } from './feedback';
+import { focusTarget } from './navigation';
+import type { NavigationRequest } from './navigation';
 
 export function ExpeditionPanel({
   state,
@@ -16,47 +18,66 @@ export function ExpeditionPanel({
   navigate,
 }: PanelProps & {
   feedback: Feedback[];
-  request: { sequence: number; destination: DestinationId };
+  request: NavigationRequest<'expeditions'> | null;
   navigate: Navigate;
 }) {
   const [destination, setDestination] = useState<
     Record<AdventurerId, DestinationId>
   >({ iris: 'forest', rowan: 'forest' });
-  const lastRequest = useRef(request.sequence);
-  const section = useRef<HTMLElement>(null);
-  const [routeAdventurer, setRouteAdventurer] = useState<AdventurerId | null>(
-    null,
-  );
+  const lastRequest = useRef(request?.sequence ?? 0);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const cards = useRef<Partial<Record<AdventurerId, HTMLElement | null>>>({});
+  const hireButtons = useRef<
+    Partial<Record<AdventurerId, HTMLButtonElement | null>>
+  >({});
+  const dispatchButtons = useRef<
+    Partial<Record<AdventurerId, HTMLButtonElement | null>>
+  >({});
+  const [route, setRoute] = useState<{
+    adventurer: AdventurerId;
+    destination: DestinationId;
+  } | null>(null);
   const routeEntry = state.adventurers.find(
-    (entry) => entry.id === routeAdventurer,
+    (entry) => entry.id === route?.adventurer,
   );
-  const routeMessage = routeEntry
-    ? `${destinations[request.destination].name}で素材を集められます。${routeEntry.trip ? '探索中です。帰還後に探索先を選んで派遣してください。' : routeEntry.hired ? '探索先を確認して派遣してください。' : 'まず冒険者を雇いましょう。'}`
-    : '';
+  const routeMessage =
+    route && routeEntry
+      ? `${destinations[route.destination].name}で素材を集められます。${routeEntry.trip ? '探索中です。帰還後に探索先を選んで派遣してください。' : routeEntry.hired ? '探索先を確認して派遣してください。' : 'まず冒険者を雇いましょう。'}`
+      : '';
   useEffect(() => {
-    if (lastRequest.current === request.sequence) return;
+    if (!request || lastRequest.current === request.sequence) return;
     lastRequest.current = request.sequence;
-    const entry =
-      state.adventurers.find((entry) => entry.hired && !entry.trip) ??
-      state.adventurers.find((entry) => !entry.hired) ??
-      state.adventurers[0]!;
-    setDestination((value) => ({ ...value, [entry.id]: request.destination }));
-    setRouteAdventurer(entry.id);
-    section.current
-      ?.querySelector<HTMLElement>(`[data-testid="adventurer-${entry.id}"]`)
-      ?.focus();
-  }, [request]);
+    const target = request.target;
+    if (target?.type === 'destination') {
+      const entry =
+        state.adventurers.find((entry) => entry.hired && !entry.trip) ??
+        state.adventurers.find((entry) => !entry.hired) ??
+        state.adventurers[0]!;
+      if (!unlocked(state, destinations[target.destination].requires)) {
+        focusTarget(heading.current, null, false);
+        return;
+      }
+      setDestination((value) => ({ ...value, [entry.id]: target.destination }));
+      setRoute({ adventurer: entry.id, destination: target.destination });
+      focusTarget(cards.current[entry.id], heading.current);
+    } else if (target) {
+      const button =
+        target.type === 'hire'
+          ? hireButtons.current[target.adventurer]
+          : dispatchButtons.current[target.adventurer];
+      focusTarget(button, cards.current[target.adventurer] ?? heading.current);
+    } else focusTarget(heading.current, null, false);
+  }, [request, state]);
   return (
     <section
       id="expeditions"
-      ref={section}
       className="panel"
       aria-labelledby="expeditions-title"
     >
       <div className="panel-heading">
         <div>
           <p className="eyebrow">EXPEDITIONS</p>
-          <h2 id="expeditions-title" tabIndex={-1}>
+          <h2 ref={heading} id="expeditions-title" tabIndex={-1}>
             冒険者ギルド
           </h2>
         </div>
@@ -82,6 +103,9 @@ export function ExpeditionPanel({
           <article
             className={`adventurer-card ${feedback.some((event) => event.type === 'returned' && event.adventurerId === entry.id) ? 'just-returned' : ''}`}
             key={entry.id}
+            ref={(node) => {
+              cards.current[entry.id] = node;
+            }}
             tabIndex={-1}
             data-testid={`adventurer-${entry.id}`}
           >
@@ -100,6 +124,9 @@ export function ExpeditionPanel({
                 <p>雇用すると、森や遺跡の素材集めを任せられます。</p>
                 <button
                   className="secondary wide"
+                  ref={(node) => {
+                    hireButtons.current[entry.id] = node;
+                  }}
                   aria-label={`${data.name}を雇う`}
                   disabled={state.gold < data.price}
                   onClick={() => send({ type: 'hire', id: entry.id })}
@@ -171,6 +198,9 @@ export function ExpeditionPanel({
                 )}
                 <button
                   className="primary wide"
+                  ref={(node) => {
+                    dispatchButtons.current[entry.id] = node;
+                  }}
                   aria-label={`${data.name}を派遣`}
                   disabled={entry.trip !== null}
                   onClick={() =>
@@ -196,10 +226,10 @@ export function ExpeditionPanel({
                   <button
                     className="subtle wide"
                     onClick={() =>
-                      navigate(
-                        'research',
-                        '[data-testid="research-gathering-2"]',
-                      )
+                      navigate({
+                        screen: 'research',
+                        target: { type: 'research', id: 'gathering-2' },
+                      })
                     }
                   >
                     「帰り道の約束」で自動再派遣を解放 →
@@ -214,7 +244,10 @@ export function ExpeditionPanel({
         <button
           className="subtle wide"
           onClick={() =>
-            navigate('research', '[data-testid="research-gathering-3"]')
+            navigate({
+              screen: 'research',
+              target: { type: 'research', id: 'gathering-3' },
+            })
           }
         >
           「月影への地図」で遺跡探索を解放 →

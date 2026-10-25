@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useGame } from './useGame';
 import { number, seconds } from './format';
 import { WorkshopPanel } from './WorkshopPanel';
@@ -8,14 +8,13 @@ import { Journal } from './Journal';
 import { ResearchTree } from './ResearchTree';
 import { QuestProgress } from './QuestProgress';
 import { Dialog } from './Dialog';
-import type { Navigate, Screen } from './types';
+import type { Navigate, NavigationRequest } from './navigation';
 import { FeedbackLayer } from './FeedbackLayer';
 import { ItemArtwork } from './Artwork';
 import { Icon } from './Icon';
 import { usePreferences } from './usePreferences';
 import { useFeedbackSound } from './useFeedbackSound';
 import { SettingsControls } from './SettingsControls';
-import type { DestinationId, EquipmentKind } from '../game/types';
 
 const screens = [
   { id: 'workshop', label: '工房', icon: 'workshop' },
@@ -32,69 +31,21 @@ export function App() {
   const sound = useFeedbackSound(game.feedback, preferences);
   const feedback = preferences.notifications ? game.feedback : [];
   const recentSale = game.feedback.findLast((event) => event.type === 'sold');
-  const [active, setActive] = useState<Screen>('workshop');
+  const [navigation, setNavigation] = useState<NavigationRequest>({
+    screen: 'workshop',
+    sequence: 0,
+  });
+  const active = navigation.screen;
   const [resetEpoch, setResetEpoch] = useState(0);
   const [dialog, setDialog] = useState<'settings' | 'journal' | null>(null);
-  const [equipmentRequest, setEquipmentRequest] = useState({
-    sequence: 0,
-    kind: undefined as EquipmentKind | undefined,
-  });
-  const [expeditionRequest, setExpeditionRequest] = useState({
-    sequence: 0,
-    destination: 'forest' as DestinationId,
-  });
-  const [focusRequest, setFocusRequest] = useState<{
-    screen: Screen;
-    target: string;
-  } | null>(null);
-  const views = useRef<HTMLDivElement>(null);
-  const navigate: Navigate = (screen, target) => {
-    setActive(screen);
-    if (target?.startsWith('equipment'))
-      setEquipmentRequest((value) => ({
-        sequence: value.sequence + 1,
-        kind:
-          target === 'equipment:still'
-            ? 'still'
-            : target === 'equipment:cauldron'
-              ? 'cauldron'
-              : undefined,
-      }));
-    if (target?.startsWith('expedition:'))
-      setExpeditionRequest((value) => ({
-        sequence: value.sequence + 1,
-        destination: target === 'expedition:ruins' ? 'ruins' : 'forest',
-      }));
-    setFocusRequest({ screen, target: target ?? '' });
-  };
-  useEffect(() => {
-    if (
-      !focusRequest ||
-      focusRequest.target.startsWith('equipment') ||
-      focusRequest.target.startsWith('expedition:')
-    )
-      return;
-    const view = views.current?.querySelector(`#view-${focusRequest.screen}`);
-    let focus = focusRequest.target
-      ? view?.querySelector(focusRequest.target)
-      : view?.querySelector('h2');
-    if (
-      focus instanceof HTMLElement &&
-      focus.matches(':disabled, [aria-disabled="true"]')
-    )
-      focus = focus.closest('[tabindex="-1"]') ?? view?.querySelector('h2');
-    if (focus instanceof HTMLElement) {
-      focus.focus({ preventScroll: true });
-      if (focusRequest.target) focus.scrollIntoView({ block: 'nearest' });
-    }
-  }, [focusRequest]);
+  const navigate = useCallback<Navigate>((next) => {
+    setNavigation((current) => ({ ...next, sequence: current.sequence + 1 }));
+  }, []);
   const reset = () => {
     if (game.reset()) {
       setResetEpoch((value) => value + 1);
       setDialog(null);
-      setActive('workshop');
-      setEquipmentRequest({ sequence: 0, kind: undefined });
-      setExpeditionRequest({ sequence: 0, destination: 'forest' });
+      setNavigation({ screen: 'workshop', sequence: 0 });
     }
   };
   const roleMessage =
@@ -200,7 +151,7 @@ export function App() {
                   aria-label={screen.label}
                   aria-pressed={active === screen.id}
                   aria-controls={`view-${screen.id}`}
-                  onClick={() => navigate(screen.id)}
+                  onClick={() => navigate({ screen: screen.id })}
                 >
                   <Icon name={screen.icon} />
                   <span className="nav-label">{screen.label}</span>
@@ -210,7 +161,7 @@ export function App() {
                 </button>
               ))}
             </nav>
-            <main className="views" ref={views}>
+            <main className="views">
               <div
                 id="view-workshop"
                 className="screen"
@@ -220,8 +171,7 @@ export function App() {
                   key={resetEpoch}
                   state={state}
                   send={send}
-                  active={active === 'workshop'}
-                  request={equipmentRequest}
+                  request={navigation.screen === 'workshop' ? navigation : null}
                   navigate={navigate}
                   disabled={game.role !== 'owner'}
                   feedback={feedback}
@@ -241,7 +191,9 @@ export function App() {
                     state={state}
                     send={send}
                     feedback={feedback}
-                    request={expeditionRequest}
+                    request={
+                      navigation.screen === 'expeditions' ? navigation : null
+                    }
                     navigate={navigate}
                   />
                 </fieldset>
@@ -259,6 +211,9 @@ export function App() {
                     state={state}
                     send={send}
                     feedback={feedback}
+                    request={
+                      navigation.screen === 'inventory' ? navigation : null
+                    }
                   />
                 </fieldset>
               </div>
@@ -271,24 +226,37 @@ export function App() {
                   className="game-controls"
                   disabled={game.role !== 'owner'}
                 >
-                  <ResearchTree state={state} send={send} navigate={navigate} />
+                  <ResearchTree
+                    state={state}
+                    send={send}
+                    navigate={navigate}
+                    request={
+                      navigation.screen === 'research' ? navigation : null
+                    }
+                  />
                 </fieldset>
               </div>
             </main>
           </div>
           <div className="activity-bar">
-            <button className="subtle" onClick={() => navigate('expeditions')}>
+            <button
+              className="subtle"
+              onClick={() => navigate({ screen: 'expeditions' })}
+            >
               探索中 {exploring.length}人
               {exploring[0]?.trip
                 ? ` · あと${seconds(exploring[0].trip.remaining)}`
                 : ''}
             </button>
-            <button className="subtle" onClick={() => navigate('workshop')}>
+            <button
+              className="subtle"
+              onClick={() => navigate({ screen: 'workshop' })}
+            >
               素材待ち {waiting}台
             </button>
             <button
               className="subtle stock-summary"
-              onClick={() => navigate('inventory')}
+              onClick={() => navigate({ screen: 'inventory' })}
             >
               <ItemArtwork item="herb" />
               薬草 {number(state.inventory.herb)} · <ItemArtwork item="water" />

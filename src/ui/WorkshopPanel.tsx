@@ -11,20 +11,20 @@ import type { Navigate, PanelProps } from './types';
 import { EquipmentArtwork, ItemArtwork, RoomArtwork } from './Artwork';
 import { AdventureBrief } from './AdventureBrief';
 import type { Feedback } from './feedback';
+import { focusTarget } from './navigation';
+import type { NavigationRequest } from './navigation';
 
 type Placement =
   { type: 'buy'; kind: EquipmentKind } | { type: 'move'; id: number } | null;
 export function WorkshopPanel({
   state,
   send,
-  active,
   request,
   navigate,
   disabled,
   feedback,
 }: PanelProps & {
-  active: boolean;
-  request: { sequence: number; kind: EquipmentKind | undefined };
+  request: NavigationRequest<'workshop'> | null;
   navigate: Navigate;
   disabled: boolean;
   feedback: Feedback[];
@@ -35,9 +35,15 @@ export function WorkshopPanel({
   const [cursor, setCursor] = useState(
     () => state.equipment[0]!.y * GRID_COLUMNS + state.equipment[0]!.x,
   );
-  const floor = useRef<HTMLDivElement>(null);
-  const detail = useRef<HTMLDivElement>(null);
-  const lastRequest = useRef(request.sequence);
+  const active = request !== null;
+  const heading = useRef<HTMLHeadingElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const cells = useRef<Array<HTMLButtonElement | null>>([]);
+  const purchases = useRef<
+    Partial<Record<EquipmentKind, HTMLButtonElement | null>>
+  >({});
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const lastRequest = useRef(request?.sequence ?? 0);
   const compact = useCompactLayout();
   const equipment =
     state.equipment.find((entry) => entry.id === selected) ??
@@ -48,28 +54,35 @@ export function WorkshopPanel({
   useEffect(() => {
     if (disabled) setPlacement(null);
   }, [disabled]);
+  returnFocus.current =
+    cells.current[equipment.y * GRID_COLUMNS + equipment.x] ?? heading.current;
   useEffect(() => {
-    if (request.sequence !== lastRequest.current) {
-      lastRequest.current = request.sequence;
-      const match =
-        request.kind &&
-        state.equipment.find((entry) => entry.kind === request.kind);
-      if (match) {
-        setSelected(match.id);
-        setCursor(match.y * GRID_COLUMNS + match.x);
+    if (!request || request.sequence === lastRequest.current) return;
+    lastRequest.current = request.sequence;
+    const target = request.target;
+    if (target?.type === 'equipment') {
+      const match = target.kind
+        ? state.equipment.find((entry) => entry.kind === target.kind)
+        : equipment;
+      if (!match) {
+        focusTarget(heading.current, null, false);
+        return;
       }
+      setSelected(match.id);
+      setCursor(match.y * GRID_COLUMNS + match.x);
       if (compact) setSheet(true);
       else
-        detail.current
-          ?.querySelector<HTMLButtonElement>('.craft-toggle')
-          ?.focus();
-    }
-  }, [request, compact]);
+        focusTarget(
+          toggle.current,
+          cells.current[match.y * GRID_COLUMNS + match.x],
+        );
+    } else if (target?.type === 'purchase') {
+      focusTarget(purchases.current[target.kind], heading.current);
+    } else focusTarget(heading.current, null, false);
+  }, [request, compact, state.equipment, equipment]);
   const focusCell = (index: number) => {
     setCursor(index);
-    floor.current
-      ?.querySelector<HTMLButtonElement>(`[data-cell="${index}"]`)
-      ?.focus();
+    cells.current[index]?.focus();
   };
   useEffect(() => {
     if (placement) focusCell(cursor);
@@ -134,9 +147,10 @@ export function WorkshopPanel({
       send={send}
       equipment={equipment}
       disabled={disabled}
-      navigate={(screen, target) => {
+      toggleRef={toggle}
+      navigate={(next) => {
         setSheet(false);
-        navigate(screen, target);
+        navigate(next);
       }}
       onMove={() => startPlacement({ type: 'move', id: equipment.id })}
     />
@@ -157,7 +171,7 @@ export function WorkshopPanel({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">THE STARLIT ATELIER</p>
-            <h2 id="workshop-title" tabIndex={-1}>
+            <h2 ref={heading} id="workshop-title" tabIndex={-1}>
               錬金術工房
             </h2>
           </div>
@@ -185,7 +199,6 @@ export function WorkshopPanel({
           <RoomArtwork />
           <div
             className="workshop-floor"
-            ref={floor}
             onKeyDown={gridKey}
             style={{
               gridTemplateColumns: `repeat(${GRID_COLUMNS}, minmax(44px, 1fr))`,
@@ -217,6 +230,9 @@ export function WorkshopPanel({
               return (
                 <button
                   key={index}
+                  ref={(node) => {
+                    cells.current[index] = node;
+                  }}
                   data-cell={index}
                   data-state={
                     entry
@@ -301,6 +317,9 @@ export function WorkshopPanel({
             return (
               <div key={kind}>
                 <button
+                  ref={(node) => {
+                    purchases.current[kind] = node;
+                  }}
                   aria-label={`${data.name}を購入・配置`}
                   disabled={
                     locked ||
@@ -339,17 +358,14 @@ export function WorkshopPanel({
             open={sheet && active}
             title="設備の詳細"
             sheet
+            returnFocus={returnFocus}
             onClose={() => setSheet(false)}
           >
             {details}
           </Dialog>
         </>
       ) : (
-        <aside
-          className="panel equipment-sidebar"
-          aria-label="選択設備の詳細"
-          ref={detail}
-        >
+        <aside className="panel equipment-sidebar" aria-label="選択設備の詳細">
           {details}
           <AdventureBrief
             state={state}
