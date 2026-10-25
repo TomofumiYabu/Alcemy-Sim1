@@ -1,6 +1,6 @@
 # M2前リファクタリングの対応記録
 
-2026-10-25（Asia/Tokyo）。ユーザー指定Goal「リファクタリング完了」に対し、[計画](PLAN.md)のRF-1〜RF-4とRF-5のローカル検証・文書整備を完了した。最終CI・mainへの反映・公開確認は実際の状態を下記へ記す。開始時mainは `e64c4c1`、ブランチは `codex/refactor-m2-readiness`。公開状態は下記で分けて記録する。
+実装日: 2026-10-25、公開完了日: 2026-10-26（Asia/Tokyo）。ユーザー指定Goal「リファクタリング完了」に対し、[計画](PLAN.md)のRF-1〜RF-5を実装・検証・文書・PR・公開後確認まで完了した。開始時mainは `e64c4c1`、実装ブランチは `codex/refactor-m2-readiness`。公開コミットは `c1b76ad`。
 
 ## 段階別の成果
 
@@ -10,7 +10,7 @@
 | RF-2 | 案内を対象ID＋現在の状態から表示。無効なボタンからカード等へフォーカス。画像失敗をURL単位で扱う | `20be8a9`。修正前は3件すべて失敗し、修正後はPC／モバイルの6件成功 |
 | RF-3 | 任意の文字列による移動をNavigationの判別共用体へ置換。各パネルが対象のDOM参照を所有し、共通focusTargetで無効・不在を扱う。シートは選択設備へフォーカスを戻す | `c18749b`。画面操作30件と追加導線2件成功。移動だけで購入・派遣・レシピ変更をしない |
 | RF-4 | workRulesへ合成・派遣の結果計算と履歴検証を集約。現行カタログと凍結ルールの入力を区別し、合法な過去条件を受け入れる | `318ecec`。単体66件成功。固定v1／v2、許容境界、不正値、2version混在、研究購入・移動後の仕事を検証 |
-| RF-5 | 全件検証、4寸法・文字拡大、基準と同条件の性能比較、ローカルsmoke、文書。表示確認で見つかった長い素材名の重なりも最小修正 | `e11be69`で式の重なりを修正。最終ローカル202件と表示32条件＋モバイルシート4条件、性能・smokeが成功。最終CIと公開状態は下記 |
+| RF-5 | 全件検証、4寸法・文字拡大、基準と同条件の性能比較、ローカルsmoke、文書。表示確認で見つかった長い素材名の重なりも最小修正 | `e11be69`で式の重なりを修正。最終ローカル202件と表示32条件＋モバイルシート4条件、性能・smokeが成功。main CI202件・deploy成功。公開16ファイル一致と6組の操作も成功 |
 
 RF-1のCIとスクリプトを別commitにし、以後も段階ごとのcommitを残す。Goal全体を1つのリリースとして確認できるよう、計画で原則とした段階別PRから、1つのdraft PRへ集約する方式にした。PR CIはRF-1から実際に確認した。
 
@@ -51,9 +51,26 @@ Cloud Chromium、1366×768、演出あり、新しいブラウザープロファ
 
 ## Git・CI・公開
 
-[PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)を作成してこのチャットへ添付済み。RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は単体59件＋通常60件＋Pages60件＝179件成功、deployはskipped。全アプリ変更を含む `ae6997b` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40201658070)も単体66件＋通常68件＋Pages68件＝202件成功をログで確認し、成果物uploadとdeployはskipped。検証メタデータを含む最終実装head `241798f` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40202126969)も単体66＋通常68＋Pages68＝202件成功、deploy skipped。ログとジョブ状態で確認済み。PRはdraftで作成し、検証後にreadyへ変更した。
+[PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4)をこのチャットへ添付済み。最終head `0d8df75c750c6d3e9a2f91a5cdc55a44d0c396bb` を、マージ直前に未merge・競合なし・CI成功と照合した。ユーザーの新しい明示許可「進めてOK」（対象はPR #4のマージ・公開・公開後確認）を受け、mainへmergeした。マージコミットは `c1b76adb2f0656ebe6611c19056464039a477c79`。PRはclosed・mergedとAPIで確認済み。
 
-PR #4のmergeを1回実行したが、自動承認レビューに拒否された。理由は「確認できる明示許可はUI-2およびUI-3/UI-4に限定され、今回のリファクタリングPRのマージ許可はない」。mainへの反映がPages配信を起動するため、今回分の明示許可待ちとして保留する。別経路で再試行していない。APIでPRがopen・未merge、mainが `e64c4c1` のままであることを確認した。結果不明ではない。現在の公開版はUI-3／UI-4で、今回の配信と公開後smokeは未実施。ローカル本番previewでのsmokeと、今回分の公開サイトの検証を混同しない。公開する場合は配信成功後に検証したdistを用い、追跡したpublic-smokeで配信ファイルの一致・操作・保存互換性を確認する。
+- RF-1の[CI #9](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40199171074)は59＋60＋60＝179件成功、deploy skipped。
+- 全アプリ変更を含む `ae6997b` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40201658070)、検証メタデータを含む `241798f` の[CI](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40202126969)、最終head `0d8df75` の[CI #12](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40202561075)も各66＋68＋68＝202件成功、deploy skipped。最終headのログまで確認した。PRはdraftで作成し、検証後にreadyへ変更した。
+- mainの[公開CI #13](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40215354333)は対象SHA `c1b76ad`、build・deployとも成功。単体66＋通常68＋Pages68＝202件成功をログで確認した。配信は2026-10-25 17:16:54 UTCまでに完了。
+
+初回のmerge操作は、自動承認レビューが「既存許可はUI-2／UI-3／UI-4に限定され、今回分の許可がない」として拒否した。その後の新しい明示許可に基づく1回の再試行で成功した。拒否の別経路による回避や結果不明の操作はない。承認待ち・公開保留は解消済み。
+
+### 公開後の実測確認
+
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+2026-10-25 17:17:47 UTC に `scripts/public-smoke.mjs` が成功。cleanな `c1b76ad` の本番ビルドと公開HTML・JS・CSS・favicon・WebP12ファイルの計16ファイルをSHA-256で照合し、全てHTTP 200・完全一致。mainの当該SHAの配信成功と合わせて、期待するコミットの成果物が配信されたことを確認した。JSは `index-AjZrmwJK.js`、CSSは `index-ClSbRIua.css`。全13画像のデコードも成功。
+
+- PC（1440×900）・モバイル（390×844）：雇用→派遣→合成→販売→研究の一巡、設備購入・配置・移動、再読込後のv2保存復元、通知の非再生、横溢れなし。
+- PC別タブ：待機タブの保存保護と、所有タブを閉じた後の最新状態からの引き継ぎ。
+- 固定v1：移行、元JSONの完全なバックアップ、進行中ジョブの完了。
+- PC（1366×768）・狭いモバイル（320×740）：素材から蒸留器・遺跡への導線、停止予約とバッチ完了、遺跡帰還、全アート、表示・音設定の復元、文字125%の横溢れなし。
+
+計6組の確認でページ例外・console error・リクエスト失敗0。PCとモバイルの画面も目視確認した。公開応答は継承したproxyとCAでTLS検証を維持して取得し、Chromiumの公開HTTPS originへ渡した。ローカルdistは照合用で、公開応答を代用していない。Chromium自身の直接HTTPS経路は未評価。結果・取得応答・画面は `.cache/verification/refactor-published/`、実行ログは `/tmp/alcemy-refactor-published.log` に保持し、commitしない。
 
 ## 失敗と修正の記録
 
@@ -61,6 +78,9 @@ PR #4のmergeを1回実行したが、自動承認レビューに拒否された
 - 計測起動の初回はpreviewへPagesのbaseを渡し忘れ、JSにHTMLが返りタイムアウト。起動手順を修正し、正しいbaseで計測・smokeが成功した。
 - 表示スクリプトの初回は、モバイルで閉じたdialogのh2も含むselectorが2件へ一致して失敗。正しい見出しのアクセシブル名で確認するよう修正した。製品の表示失敗とは分ける。
 - 表示確認で魔力薬の長い素材名の重なりを発見。既存の導線テストへラベル同士の非重複を追加し、修正前のPC・モバイル2件の失敗を確認した。素材名の幅を確保して折り返す最小CSS修正を加えたため、最終の全件検証と計測をやり直した。
+
+- マージ後の補助SHA照合の初回は、ルートURLをindex.htmlへ解決せずdistディレクトリを読もうとして失敗。補助コマンドを修正後、検証済み16ファイルと完全一致した。公開smoke自体は初回成功。
+- 汎用GitHub fetchはdeploymentsエンドポイントに未対応で400を返したため、対応するActions APIの対象SHA・build／deploy成功と公開16ファイル一致を根拠にした。公開やアクセスの阻害はない。
 
 ## 別段階の設計と未実施
 

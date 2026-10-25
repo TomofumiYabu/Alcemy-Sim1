@@ -2,7 +2,19 @@
 
 ## 公開対象と状態
 
-今回のリファクタリングは [PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4) に実装・push済み。ローカルと最終実装CIは各202件成功。mainへのmergeは今回分の明示許可がないとして自動承認レビューが拒否し、反映・配信・公開後確認は保留中。以下は現在も公開中のUI-3／UI-4の実績。詳細は [リファクタリング対応記録](REFACTOR-RESULTS-2026-10-25.md) を参照。
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
+
+[PR #4](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/4) のリファクタリングを公開済み。ユーザーの「進めてOK」を受け、最終head `0d8df75` とCI成功を再確認してmainへmergeした。マージコミットは `c1b76adb2f0656ebe6611c19056464039a477c79`。承認待ち・公開保留は解消済み。
+
+- [公開CI #13](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40215354333)は当該SHAでbuild／deployとも成功。単体66＋通常68＋Pages68＝202件成功をログで確認。
+- 2026-10-25 17:17:47 UTC に公開HTML・JS・CSS・favicon・WebP12ファイルの計16ファイルでHTTP 200と検証済みdistとのSHA-256完全一致を確認。JSは `index-AjZrmwJK.js`、CSSは `index-ClSbRIua.css`。全13画像をデコードできた。
+- PC／モバイルの一巡・v2保存復元・通知非再生、固定v1移行・元JSONバックアップ・旧仕事の完了、待機タブの保護と引き継ぎ、蒸留器の停止予約・遺跡・素材導線・設定復元・文字125%が成功。計6組、ブラウザーエラー0。
+- 公開応答はproxyとCAでTLS検証を維持して取得し、Chromiumの公開HTTPS originで操作確認。ローカルdistは照合用。Chromium自身の直接HTTPS経路、Firefox／WebKit、実機タッチは未評価。
+- schemaVersion 2、contentVersion 1、ゲーム数値・経済・保存保護を維持。ターン制は設計文書のみで、コードは追加していない。
+
+詳しくは [対応記録](REFACTOR-RESULTS-2026-10-25.md#公開後の実測確認)。結果・応答・画面は `.cache/verification/refactor-published/` に保持する。
+
+## 前回の公開（UI-3／UI-4）
 
 - リポジトリ: `TomofumiYabu/Alcemy-Sim1`
 - 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
