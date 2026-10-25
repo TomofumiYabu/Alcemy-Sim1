@@ -22,7 +22,7 @@ export function AdventureBrief({
     <button
       className={`adventure-brief ${returned ? 'just-returned' : ''}`}
       aria-label="イリスの冒険者画面を開く"
-      onClick={() => navigate('expeditions')}
+      onClick={() => navigate({ screen: 'expeditions' })}
     >
       <IrisPortrait />
       <span>

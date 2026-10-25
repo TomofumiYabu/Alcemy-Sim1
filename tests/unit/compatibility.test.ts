@@ -33,6 +33,37 @@ afterEach(() => {
 });
 
 describe('published v1 compatibility and historical job rules', () => {
+  it.each(['v2-inflight', 'v2-researched'])(
+    'restores fixed published %s work and completes it without changing captured conditions',
+    (name) => {
+      const raw = fixture(name);
+      const original = JSON.parse(raw);
+      const restored = decodeSave(raw);
+      expect(restored).toEqual(original);
+      expect(decodeSave(encodeSave(restored))).toEqual(original);
+      const paused = structuredClone(restored);
+      for (const entry of paused.equipment) entry.enabled = false;
+      for (const entry of paused.adventurers) entry.auto = false;
+      const crafts = paused.equipment.filter((entry) => entry.job);
+      const trips = paused.adventurers.filter((entry) => entry.trip);
+      const ticks = Math.max(
+        0,
+        ...crafts.map((entry) => entry.job!.remaining),
+        ...trips.map((entry) => entry.trip!.remaining),
+      );
+      const completed = advanceTicks(paused, ticks);
+      expect(completed.stats.crafted - paused.stats.crafted).toBe(
+        crafts.length,
+      );
+      expect(completed.stats.expeditions - paused.stats.expeditions).toBe(
+        trips.length,
+      );
+      expect(completed.knowledge - paused.knowledge).toBe(
+        crafts.reduce((sum, entry) => sum + entry.job!.knowledge, 0),
+      );
+      expect(decodeSave(encodeSave(completed))).toEqual(completed);
+    },
+  );
   it.each(['v1-initial', 'v1-inflight', 'v1-researched'])(
     'migrates fixed %s data without changing inventory, research or remaining work',
     (name) => {

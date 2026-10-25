@@ -41,12 +41,13 @@ export function Artwork({
   name: string;
   className?: string;
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const failed = !src || failedSource === src;
   return (
     <span
       className={`artwork ${className}`}
       data-art={name}
-      data-failed={failed || !src}
+      data-failed={failed}
       aria-hidden="true"
     >
       {src && !failed ? (
@@ -57,7 +58,7 @@ export function Artwork({
           height="160"
           decoding="async"
           draggable={false}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSource(src)}
         />
       ) : (
         <span className="artwork-fallback">{fallback}</span>

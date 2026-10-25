@@ -53,23 +53,35 @@ describe('UI preferences stay separate from game progress', () => {
 describe('material routes and research previews', () => {
   it('sends raw materials to their actual unlocked source or its required research', () => {
     const state = createGame();
-    expect(materialSource(state, 'herb').target).toBe('expedition:forest');
-    expect(materialSource(state, 'water').target).toBe('expedition:forest');
-    expect(materialSource(state, 'crystal').target).toBe(
-      '[data-testid="research-gathering-3"]',
-    );
+    expect(materialSource(state, 'herb').navigation).toEqual({
+      screen: 'expeditions',
+      target: { type: 'destination', destination: 'forest' },
+    });
+    expect(materialSource(state, 'water').navigation).toEqual({
+      screen: 'expeditions',
+      target: { type: 'destination', destination: 'forest' },
+    });
+    expect(materialSource(state, 'crystal').navigation).toEqual({
+      screen: 'research',
+      target: { type: 'research', id: 'gathering-3' },
+    });
     state.research = ['gathering-1', 'gathering-2', 'gathering-3'];
-    expect(materialSource(state, 'crystal').target).toBe('expedition:ruins');
+    expect(materialSource(state, 'crystal').navigation).toEqual({
+      screen: 'expeditions',
+      target: { type: 'destination', destination: 'ruins' },
+    });
   });
   it('takes an intermediate through unlock, placement and the existing machine', () => {
     const state = createGame();
-    expect(materialSource(state, 'extract').target).toBe(
-      '[data-testid="research-production-2"]',
-    );
+    expect(materialSource(state, 'extract').navigation).toEqual({
+      screen: 'research',
+      target: { type: 'research', id: 'production-2' },
+    });
     state.research = ['production-1', 'production-2'];
-    expect(materialSource(state, 'extract').target).toBe(
-      '[aria-label="蒸留器を購入・配置"]',
-    );
+    expect(materialSource(state, 'extract').navigation).toEqual({
+      screen: 'workshop',
+      target: { type: 'purchase', kind: 'still' },
+    });
     state.equipment.push({
       id: 2,
       kind: 'still',
@@ -79,7 +91,10 @@ describe('material routes and research previews', () => {
       enabled: false,
       job: null,
     });
-    expect(materialSource(state, 'extract').target).toBe('equipment:still');
+    expect(materialSource(state, 'extract').navigation).toEqual({
+      screen: 'workshop',
+      target: { type: 'equipment', kind: 'still' },
+    });
   });
   it('uses the engine’s current preview and leaves progress untouched', () => {
     const state = createGame();

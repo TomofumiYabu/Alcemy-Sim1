@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { equipmentTypes, items, recipes, research } from '../game/content';
 import {
   getCraftPreview,
@@ -22,11 +23,13 @@ export function EquipmentDetail({
   onMove,
   navigate,
   disabled,
+  toggleRef,
 }: PanelProps & {
   equipment: Equipment;
   onMove: () => void;
   navigate: Navigate;
   disabled: boolean;
+  toggleRef: Ref<HTMLButtonElement>;
 }) {
   const preview = getCraftPreview(state, equipment.recipe);
   const missing = (
@@ -36,7 +39,7 @@ export function EquipmentDetail({
     ...new Map(
       missing.map(([id]) => {
         const source = materialSource(state, id);
-        return [source.target, source];
+        return [JSON.stringify(source.navigation), source];
       }),
     ).values(),
   ];
@@ -138,6 +141,7 @@ export function EquipmentDetail({
         </p>
       )}
       <button
+        ref={toggleRef}
         className={`craft-toggle ${equipment.enabled ? 'secondary wide' : 'primary wide'}`}
         onClick={() => send({ type: 'toggle', id: equipment.id })}
       >
@@ -153,9 +157,9 @@ export function EquipmentDetail({
           ))}
           {sources.map((source) => (
             <button
-              key={source.target}
+              key={JSON.stringify(source.navigation)}
               className="subtle wide"
-              onClick={() => navigate(source.screen, source.target)}
+              onClick={() => navigate(source.navigation)}
             >
               {source.label} →
             </button>
@@ -173,10 +177,10 @@ export function EquipmentDetail({
             key={id}
             className="subtle wide"
             onClick={() =>
-              navigate(
-                'research',
-                `[data-testid="research-${recipes[id].requires}"]`,
-              )
+              navigate({
+                screen: 'research',
+                target: { type: 'research', id: recipes[id].requires! },
+              })
             }
           >
             {recipes[id].name}は「{research[recipes[id].requires!].name}」で解放

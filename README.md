@@ -35,7 +35,9 @@ npm run dev
 npm run check
 ```
 
-Vitest単体テスト57件、型検査、本番ビルド、通常パスとGitHub PagesパスそれぞれでデスクトップとモバイルのChromium E2E（各60件、計120件。単体テストと合わせ177件）を実行します。E2Eは4173番ポートに専用サーバーを起動して終了時に停止します。結果は `test-results/`、失敗時のtraceや画像も同ディレクトリに出力され、Git管理には含まれません。`CHROMIUM_PATH` で既存のブラウザー実行ファイルを指定できます。
+Vitest単体テスト66件、型検査、本番ビルド、通常パスとGitHub PagesパスそれぞれでデスクトップとモバイルのChromium E2E（各68件、計136件。単体テストと合わせ202件）を実行します。E2Eは4173番ポートに専用サーバーを起動して終了時に停止します。結果は `test-results/`、失敗時のtraceや画像も同ディレクトリに出力され、Git管理には含まれません。`CHROMIUM_PATH` で既存のブラウザー実行ファイルを指定できます。
+
+[性能・表示・配信確認の手順](scripts/README.md)と[リファクタリング対応記録](docs/REFACTOR-RESULTS-2026-10-25.md)も参照してください。
 
 ## GitHub Pages
 

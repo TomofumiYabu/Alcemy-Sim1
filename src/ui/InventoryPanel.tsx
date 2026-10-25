@@ -1,3 +1,6 @@
+import { useEffect, useRef } from 'react';
+import { focusTarget } from './navigation';
+import type { NavigationRequest } from './navigation';
 import { items } from '../game/content';
 import { salePrice } from '../game/engine';
 import { itemIds } from '../game/types';
@@ -11,13 +14,31 @@ export function InventoryPanel({
   state,
   send,
   feedback,
-}: PanelProps & { feedback: Feedback[] }) {
+  request,
+}: PanelProps & {
+  feedback: Feedback[];
+  request: NavigationRequest<'inventory'> | null;
+}) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  const rows = useRef<Partial<Record<RecipeId, HTMLElement | null>>>({});
+  const buttons = useRef<Partial<Record<RecipeId, HTMLButtonElement | null>>>(
+    {},
+  );
+  useEffect(() => {
+    if (!request) return;
+    if (request.target)
+      focusTarget(
+        buttons.current[request.target.item],
+        rows.current[request.target.item] ?? heading.current,
+      );
+    else focusTarget(heading.current, null, false);
+  }, [request]);
   return (
     <section id="inventory" className="panel" aria-labelledby="inventory-title">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">STOCK & MARKET</p>
-          <h2 id="inventory-title" tabIndex={-1}>
+          <h2 ref={heading} id="inventory-title" tabIndex={-1}>
             在庫と販売
           </h2>
         </div>
@@ -29,6 +50,10 @@ export function InventoryPanel({
           <div
             className={`inventory-row item-${id} ${feedback.some((event) => (event.type === 'crafted' && event.item === id) || (event.type === 'returned' && event.rewards[id] > 0)) ? 'inventory-gain' : ''}`}
             key={id}
+            tabIndex={-1}
+            ref={(node) => {
+              if (items[id].price > 0) rows.current[id as RecipeId] = node;
+            }}
           >
             <span className="item-icon" aria-hidden="true">
               <ItemArtwork item={id} />
@@ -51,6 +76,9 @@ export function InventoryPanel({
             </strong>
             {items[id].price > 0 ? (
               <button
+                ref={(node) => {
+                  buttons.current[id as RecipeId] = node;
+                }}
                 className="sell-button"
                 aria-label={`${items[id].name}を販売`}
                 disabled={state.inventory[id] === 0}

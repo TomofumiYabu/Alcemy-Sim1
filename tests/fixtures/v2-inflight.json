@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 2,
+  "contentVersion": 1,
+  "tick": 30,
+  "gold": 80,
+  "knowledge": 0,
+  "inventory": {
+    "herb": 2,
+    "water": 1,
+    "crystal": 0,
+    "potion": 0,
+    "extract": 0,
+    "mana": 0
+  },
+  "research": [],
+  "equipment": [
+    {
+      "id": 1,
+      "kind": "cauldron",
+      "x": 2,
+      "y": 1,
+      "recipe": "potion",
+      "enabled": true,
+      "job": {
+        "contentVersion": 1,
+        "recipe": "potion",
+        "remaining": 51,
+        "total": 80,
+        "knowledge": 1
+      }
+    }
+  ],
+  "nextEquipmentId": 2,
+  "adventurers": [
+    {
+      "id": "iris",
+      "hired": true,
+      "auto": false,
+      "trip": {
+        "contentVersion": 1,
+        "destination": "forest",
+        "remaining": 120,
+        "total": 150,
+        "rewards": {
+          "herb": 4,
+          "water": 2,
+          "crystal": 0,
+          "potion": 0,
+          "extract": 0,
+          "mana": 0
+        }
+      }
+    },
+    {
+      "id": "rowan",
+      "hired": false,
+      "auto": false,
+      "trip": null
+    }
+  ],
+  "stats": {
+    "expeditions": 0,
+    "crafted": 0,
+    "sold": 0,
+    "earned": 0
+  },
+  "log": [
+    {
+      "tick": 0,
+      "message": "イリスをささやきの森へ派遣しました。"
+    },
+    {
+      "tick": 0,
+      "message": "イリスが工房の仲間になりました。"
+    },
+    {
+      "tick": 0,
+      "message": "星灯りの工房へようこそ。まずはイリスを雇って、森へ送り出しましょう。"
+    }
+  ]
+}
