@@ -34,6 +34,10 @@ export function verificationOptions(name) {
     commit: execFileSync('git', ['rev-parse', 'HEAD'], {
       encoding: 'utf8',
     }).trim(),
+    workingTreeDirty:
+      execFileSync('git', ['status', '--porcelain'], {
+        encoding: 'utf8',
+      }).trim().length > 0,
     executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium',
   };
 }

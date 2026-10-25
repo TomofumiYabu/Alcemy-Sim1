@@ -91,20 +91,16 @@ try {
     feedback: document.querySelector('.feedback-feed').textContent,
     latestResultCount: document.querySelectorAll('.latest-result').length,
     latestResult: document.querySelector('.latest-result').textContent,
-    transfer: performance
-      .getEntriesByType('resource')
-      .map((r) => ({
-        name: r.name.split('/').at(-1),
-        transferSize: r.transferSize,
-        encoded: r.encodedBodySize,
-      })),
-    documentTransfer: performance
-      .getEntriesByType('navigation')
-      .map((r) => ({
-        transferSize: r.transferSize,
-        encoded: r.encodedBodySize,
-        domContentLoadedMs: r.domContentLoadedEventEnd,
-      })),
+    transfer: performance.getEntriesByType('resource').map((r) => ({
+      name: r.name.split('/').at(-1),
+      transferSize: r.transferSize,
+      encoded: r.encodedBodySize,
+    })),
+    documentTransfer: performance.getEntriesByType('navigation').map((r) => ({
+      transferSize: r.transferSize,
+      encoded: r.encodedBodySize,
+      domContentLoadedMs: r.domContentLoadedEventEnd,
+    })),
   }));
   const sizes = [
     `${options.dist}/index.html`,
@@ -125,7 +121,9 @@ try {
   assert.ok(navigation.every((x) => x.rendered));
   const result = {
     commit: options.commit,
+    workingTreeDirty: options.workingTreeDirty,
     url: options.url,
+    buildHTMLSha256: hash(readFileSync(`${options.dist}/index.html`)),
     browser: browser.version(),
     conditions: {
       viewport: { width: 1366, height: 768 },

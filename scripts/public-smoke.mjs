@@ -14,6 +14,7 @@ mkdirSync(root, { recursive: true });
 const artifacts = new Map();
 const results = {
   commit: options.commit,
+  workingTreeDirty: options.workingTreeDirty,
   url,
   transport:
     'HTTP responses fetched by curl with inherited proxy and CA validation, then passed to Chromium at the public HTTPS origin',

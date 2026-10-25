@@ -125,6 +125,7 @@ try {
     JSON.stringify(
       {
         commit: options.commit,
+        workingTreeDirty: options.workingTreeDirty,
         url: options.url,
         browser: browser.version(),
         checks,
