@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Check and deploy
 
 on:
   push:
@@ -6,14 +6,15 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('pages-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -37,11 +38,13 @@ jobs:
       - name: Check types, build and test root and Pages paths
         run: npm run check
       - name: Upload the tested Pages build
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: dist
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 10
