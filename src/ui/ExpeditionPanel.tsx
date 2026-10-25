@@ -24,7 +24,15 @@ export function ExpeditionPanel({
   >({ iris: 'forest', rowan: 'forest' });
   const lastRequest = useRef(request.sequence);
   const section = useRef<HTMLElement>(null);
-  const [routeMessage, setRouteMessage] = useState('');
+  const [routeAdventurer, setRouteAdventurer] = useState<AdventurerId | null>(
+    null,
+  );
+  const routeEntry = state.adventurers.find(
+    (entry) => entry.id === routeAdventurer,
+  );
+  const routeMessage = routeEntry
+    ? `${destinations[request.destination].name}で素材を集められます。${routeEntry.trip ? '探索中です。帰還後に探索先を選んで派遣してください。' : routeEntry.hired ? '探索先を確認して派遣してください。' : 'まず冒険者を雇いましょう。'}`
+    : '';
   useEffect(() => {
     if (lastRequest.current === request.sequence) return;
     lastRequest.current = request.sequence;
@@ -33,9 +41,7 @@ export function ExpeditionPanel({
       state.adventurers.find((entry) => !entry.hired) ??
       state.adventurers[0]!;
     setDestination((value) => ({ ...value, [entry.id]: request.destination }));
-    setRouteMessage(
-      `${destinations[request.destination].name}で素材を集められます。${entry.trip ? '帰還後に探索先を選んで派遣してください。' : entry.hired ? '探索先を確認して派遣してください。' : 'まず冒険者を雇いましょう。'}`,
-    );
+    setRouteAdventurer(entry.id);
     section.current
       ?.querySelector<HTMLElement>(`[data-testid="adventurer-${entry.id}"]`)
       ?.focus();

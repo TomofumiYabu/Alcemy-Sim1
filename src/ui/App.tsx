@@ -75,9 +75,14 @@ export function App() {
     )
       return;
     const view = views.current?.querySelector(`#view-${focusRequest.screen}`);
-    const focus = focusRequest.target
+    let focus = focusRequest.target
       ? view?.querySelector(focusRequest.target)
       : view?.querySelector('h2');
+    if (
+      focus instanceof HTMLElement &&
+      focus.matches(':disabled, [aria-disabled="true"]')
+    )
+      focus = focus.closest('[tabindex="-1"]') ?? view?.querySelector('h2');
     if (focus instanceof HTMLElement) {
       focus.focus({ preventScroll: true });
       if (focusRequest.target) focus.scrollIntoView({ block: 'nearest' });
