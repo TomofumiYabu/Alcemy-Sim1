@@ -46,6 +46,32 @@ test('shortages select the matching still and ruins without executing a game com
 }) => {
   await open(page, advanced());
   await equipment(page);
+  const labels = await page
+    .getByTestId('equipment-detail')
+    .locator('.recipe-ingredient > span:last-child')
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        };
+      }),
+    );
+  for (let i = 0; i < labels.length; i++)
+    for (let j = i + 1; j < labels.length; j++) {
+      const a = labels[i]!;
+      const b = labels[j]!;
+      expect(
+        a.left < b.right &&
+          b.left < a.right &&
+          a.top < b.bottom &&
+          b.top < a.bottom,
+        'recipe ingredient labels must not overlap',
+      ).toBe(false);
+    }
   await page
     .getByRole('button', { name: '蒸留器で薬草エキスを作る →', exact: true })
     .click();

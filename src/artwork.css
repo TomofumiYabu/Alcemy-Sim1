@@ -250,7 +250,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  min-width: 3.3rem;
+  min-width: max-content;
   flex: 1;
 }
 .recipe-formula .recipe-ingredient > span {
