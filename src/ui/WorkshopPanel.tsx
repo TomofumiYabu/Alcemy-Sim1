@@ -18,6 +18,7 @@ type Placement =
   { type: 'buy'; kind: EquipmentKind } | { type: 'move'; id: number } | null;
 export function WorkshopPanel({
   state,
+  shelves,
   send,
   request,
   navigate,
@@ -144,6 +145,7 @@ export function WorkshopPanel({
   const details = (
     <EquipmentDetail
       state={state}
+      shelves={shelves}
       send={send}
       equipment={equipment}
       disabled={disabled}

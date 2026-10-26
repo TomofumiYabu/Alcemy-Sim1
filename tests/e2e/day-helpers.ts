@@ -35,3 +35,19 @@ export async function runDay(page: Page, close = true) {
       .click();
   return report;
 }
+export async function rejectWrites(page: Page, key: string) {
+  await page.evaluate((key) => {
+    const env = window as unknown as { rejectSave: boolean };
+    env.rejectSave = true;
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (this === localStorage && name === key && env.rejectSave)
+        throw new DOMException('quota', 'QuotaExceededError');
+      return original.call(this, name, value);
+    };
+  }, key);
+}
+export const allowWrites = (page: Page) =>
+  page.evaluate(() => {
+    (window as unknown as { rejectSave: boolean }).rejectSave = false;
+  });

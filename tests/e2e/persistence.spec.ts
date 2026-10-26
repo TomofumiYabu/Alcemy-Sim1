@@ -1,181 +1,207 @@
-import { expect, test } from './fixtures';
-import type { Page } from '@playwright/test';
-import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../../src/persistence/save';
 import { readFileSync } from 'node:fs';
-import { closeOverlay, equipment, go, save, settings } from './navigation';
+import { test, expect } from './fixtures';
+import { createDayGame, applyDayCommand } from '../../src/game/dayEngine';
+import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../../src/persistence/save';
+import { DAY_BACKUP_KEY } from '../../src/persistence/daySave';
+import {
+  openDay,
+  seedRaw,
+  readDay,
+  runDay,
+  rejectWrites,
+  allowWrites,
+} from './day-helpers';
+import { closeOverlay, go } from './navigation';
 
-async function open(page: Page) {
-  await page.clock.install({ time: new Date('2026-10-24T00:00:00Z') });
-  await page.clock.pauseAt(new Date('2026-10-24T00:00:01Z'));
-  await page.goto('./');
-}
-async function saved(page: Page) {
-  return page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key)!),
-    SAVE_KEY,
-  );
-}
-
-test('only one tab can change or save progress and the next owner reloads the latest state', async ({
+test('only the owner settles; the next tab resumes the same saved report', async ({
   page,
   context,
 }) => {
-  await open(page);
-  await go(page, '冒険者');
+  await openDay(page);
+  await runDay(page, false);
+  const first = await readDay(page);
+  const waiter = await context.newPage();
+  await waiter.goto(page.url());
   await expect(
-    page.getByRole('button', { name: 'イリスを雇う', exact: true }),
-  ).toBeEnabled();
-  const other = await context.newPage();
-  await open(other);
-  await expect(other.getByRole('note')).toContainText('待機中');
-  await settings(other);
+    waiter.getByText('別のタブで工房が開かれています。', { exact: false }),
+  ).toBeVisible();
   await expect(
-    other.getByRole('button', { name: '今すぐ保存', exact: true }),
+    waiter.getByRole('button', { name: '1日営業する', exact: true }),
   ).toBeDisabled();
-  await expect(
-    other.getByRole('button', { name: '工房を初期化', exact: true }),
-  ).toBeDisabled();
-  await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
-  await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-  await page.clock.runFor(5_000);
-  // Close the modal so the waiting tab's HUD is accessible.
-  await closeOverlay(other);
-  await expect(other.getByTestId('gold')).toHaveText('80');
-  await other.clock.fastForward(10_000);
-  await other.evaluate(() =>
-    document.dispatchEvent(new Event('visibilitychange')),
-  );
-  expect((await saved(other)).gold).toBe(80);
+  expect(await readDay(waiter)).toEqual(first);
   await page.close();
-  await settings(other);
-  await expect(
-    other.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeEnabled();
-  await other.getByRole('button', { name: '今すぐ保存', exact: true }).click();
-  expect((await saved(other)).adventurers[0].hired).toBe(true);
-  const third = await context.newPage();
-  await open(third);
-  await settings(third);
-  await expect(
-    third.getByRole('button', { name: '工房を初期化', exact: true }),
-  ).toBeDisabled();
-  other.once('dialog', (dialog) => dialog.accept());
-  await other
-    .getByRole('button', { name: '工房を初期化', exact: true })
-    .click();
-  await other.close();
-  await expect(
-    third.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeEnabled();
-  await closeOverlay(third);
-  await expect(third.getByTestId('gold')).toHaveText('100');
-  await go(third, '冒険者');
-  await expect(
-    third.getByRole('button', { name: 'イリスを雇う', exact: true }),
-  ).toBeEnabled();
+  await expect(waiter.getByRole('dialog', { name: /営業日報$/ })).toBeVisible();
+  expect(await readDay(waiter)).toEqual(first);
+  await closeOverlay(waiter);
+  await runDay(waiter, false);
+  expect((await readDay(waiter)).completedDays).toBe(2);
 });
 
-test('autosave records elapsed work and pagehide saves the latest remaining time before restore', async ({
+test('pagehide and reload preserve exact work and an unacknowledged daily report', async ({
   page,
 }) => {
-  await open(page);
-  await go(page, '冒険者');
-  await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
-  await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-  await equipment(page);
-  await page
-    .getByRole('button', { name: '自動合成を開始', exact: true })
-    .click();
-  await closeOverlay(page);
-  await page.clock.runFor(5_300);
-  expect((await saved(page)).tick).toBe(50);
+  const s = createDayGame(42);
+  s.world.equipment[0]!.enabled = true;
+  await openDay(page, s);
+  await runDay(page, false);
+  const report = await readDay(page);
+  await page.clock.fastForward(24 * 60 * 60 * 1000);
+  expect(await readDay(page)).toEqual(report);
   await page.reload();
-  await settings(page);
-  await expect(
-    page.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeEnabled();
+  await expect(page.getByRole('dialog', { name: /営業日報$/ })).toBeVisible();
+  expect(await readDay(page)).toEqual(report);
   await closeOverlay(page);
-  const restored = await saved(page);
-  expect(restored.tick).toBe(53);
-  expect(restored.equipment[0].job.remaining).toBe(28);
-  expect(restored.adventurers[0].trip.remaining).toBe(97);
+  const acknowledged = await readDay(page);
+  await page.reload();
+  await expect(
+    page.getByRole('dialog', { name: /営業日報$/ }),
+  ).not.toBeVisible();
+  expect(await readDay(page)).toEqual(acknowledged);
+});
+
+test('pageshow reacquires ownership without advancing days or losing prepared stock', async ({
+  page,
+}) => {
+  const s = createDayGame(42);
+  s.world.inventory.potion = 2;
+  await openDay(page, s);
   await go(page, '店・在庫');
-  await page.clock.runFor(2_800);
-  await expect(page.getByTestId('inventory-potion')).toHaveText('1');
-  await go(page, '冒険者');
-  await page.clock.runFor(6_900);
-  await expect(page.getByTestId('adventurer-iris')).toContainText('待機中');
-});
-
-test('a restored page can reacquire ownership after pagehide without a stale clock', async ({
-  page,
-}) => {
-  await open(page);
-  await go(page, '冒険者');
-  await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  const prepared = await readDay(page);
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
-  await settings(page);
-  await expect(
-    page.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeDisabled();
-  await closeOverlay(page);
-  await page.clock.fastForward(60_000);
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
-  await expect(
-    page.getByRole('button', { name: 'イリスを派遣', exact: true }),
-  ).toBeEnabled();
-  expect((await saved(page)).tick).toBe(0);
-  await expect(page.getByTestId('gold')).toHaveText('80');
+  await expect(page.locator('.save-state')).toHaveText('保存済み');
+  expect(await readDay(page)).toEqual(prepared);
+  await runDay(page);
+  expect((await readDay(page)).completedDays).toBe(1);
 });
 
-test('unavailable Web Locks cannot silently fall back to unprotected writes', async ({
+test('unavailable Web Locks prevent all game writes and daily settlement', async ({
   page,
 }) => {
+  const raw = JSON.stringify(createDayGame(42));
+  await seedRaw(page, raw);
   await page.addInitScript(() =>
     Object.defineProperty(navigator, 'locks', { get: () => undefined }),
   );
-  await open(page);
-  await expect(page.getByRole('note')).toContainText(
-    '排他制御が利用できません',
-  );
-  await go(page, '冒険者');
+  await page.goto('');
   await expect(
-    page.getByRole('button', { name: 'イリスを雇う', exact: true }),
+    page.getByText('このブラウザーでは保存の排他制御が利用できません。', {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '1日営業する', exact: true }),
   ).toBeDisabled();
-  await page.clock.fastForward(60_000);
   expect(
     await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY),
-  ).toBeNull();
+  ).toBe(raw);
 });
 
-test('the released v1 save is migrated with a backup and its old work continues', async ({
+test('fixed v1 is backed up before migration and its old jobs complete exactly once', async ({
   page,
 }) => {
-  const legacy = readFileSync(
-    new URL('../fixtures/v1-inflight.json', import.meta.url),
+  const raw = readFileSync(
+      new URL('../fixtures/v1-inflight.json', import.meta.url),
+      'utf8',
+    ),
+    old = JSON.parse(raw);
+  await page.clock.install();
+  await seedRaw(page, raw);
+  await page.goto('');
+  await expect(page.locator('.save-state')).toHaveText('保存済み');
+  const migrated = await readDay(page);
+  expect(migrated.schemaVersion).toBe(3);
+  expect(migrated.world.inventory).toEqual(old.inventory);
+  expect(migrated.world.equipment[0]!.job!.remaining).toBe(
+    old.equipment[0].job.remaining,
+  );
+  const backups = await page.evaluate(
+    ({ a, b }) => [localStorage.getItem(a), localStorage.getItem(b)],
+    { a: LEGACY_BACKUP_KEY, b: DAY_BACKUP_KEY },
+  );
+  expect(backups).toEqual([raw, raw]);
+  await runDay(page, false);
+  const end = await readDay(page);
+  expect(end.world.stats.crafted).toBeGreaterThan(old.stats.crafted);
+  expect(end.world.stats.expeditions).toBeGreaterThan(old.stats.expeditions);
+  expect(end.world.gold).toBe(old.gold);
+  expect(end.completedDays).toBe(1);
+  await page.reload();
+  expect(await readDay(page)).toEqual(end);
+  expect(
+    await page.evaluate((key) => localStorage.getItem(key), DAY_BACKUP_KEY),
+  ).toBe(raw);
+});
+
+test('migration backup failure preserves the original v2 and succeeds after retry', async ({
+  page,
+}) => {
+  const raw = readFileSync(
+    new URL('../fixtures/v2-inflight.json', import.meta.url),
     'utf8',
   );
-  await page.addInitScript(
-    ({ key, value }) => {
-      if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
-    },
-    { key: SAVE_KEY, value: legacy },
-  );
-  await open(page);
-  await expect(page.getByTestId('gold')).toHaveText('80');
-  await save(page);
-  expect((await saved(page)).schemaVersion).toBe(2);
+  await page.clock.install();
+  await seedRaw(page, raw);
+  await page.addInitScript((key) => {
+    const env = window as unknown as { rejectSave: boolean };
+    env.rejectSave = true;
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (this === localStorage && name === key && env.rejectSave)
+        throw new DOMException('quota', 'QuotaExceededError');
+      return original.call(this, name, value);
+    };
+  }, DAY_BACKUP_KEY);
+  await page.goto('');
+  await expect(page.getByRole('alert')).toContainText('保存に失敗');
   expect(
-    await page.evaluate((key) => localStorage.getItem(key), LEGACY_BACKUP_KEY),
-  ).toBe(legacy);
-  await page.reload();
-  await settings(page);
+    await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY),
+  ).toBe(raw);
+  await allowWrites(page);
+  await page.getByRole('button', { name: '保存を再試行', exact: true }).click();
+  await expect(page.locator('.save-state')).toHaveText('保存済み');
+  expect((await readDay(page)).schemaVersion).toBe(3);
+  expect(
+    await page.evaluate((key) => localStorage.getItem(key), DAY_BACKUP_KEY),
+  ).toBe(raw);
+});
+
+test('failed daily save and failed report acknowledgement keep assets and retries consistent', async ({
+  page,
+}) => {
+  const data = createDayGame(42);
+  data.world.inventory.potion = 4;
+  await openDay(
+    page,
+    applyDayCommand(data, { type: 'stock', item: 'potion', amount: 4 }).state,
+  );
+  const before = await readDay(page),
+    command = {
+      type: 'finish-day' as const,
+      completedDays: before.completedDays,
+      revision: before.revision,
+    };
+  const expected = applyDayCommand(before, command).state;
+  await rejectWrites(page, SAVE_KEY);
+  await page.getByRole('button', { name: '1日営業する', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('保存に失敗');
+  expect(await readDay(page)).toEqual(before);
   await expect(
-    page.getByRole('button', { name: '今すぐ保存', exact: true }),
-  ).toBeEnabled();
+    page.getByRole('dialog', { name: /営業日報$/ }),
+  ).not.toBeVisible();
+  await allowWrites(page);
+  await runDay(page, false);
+  expect(await readDay(page)).toEqual(expected);
+  await rejectWrites(page, SAVE_KEY);
+  await page.getByRole('button', { name: '翌日の準備へ', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: /営業日報$/ })).toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: /営業日報$/ }).getByRole('alert'),
+  ).toContainText('保存に失敗');
+  expect(await readDay(page)).toEqual(expected);
+  await allowWrites(page);
   await closeOverlay(page);
-  await go(page, '店・在庫');
-  await page.clock.runFor(5_100);
-  await expect(page.getByTestId('inventory-potion')).toHaveText('1');
-  await expect(page.getByTestId('knowledge')).toHaveText('1');
+  expect((await readDay(page)).completedDays).toBe(1);
+  expect((await readDay(page)).shop.salesTotal).toBe(expected.shop.salesTotal);
 });

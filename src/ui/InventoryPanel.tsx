@@ -24,12 +24,14 @@ function ProductShelf({
   send,
   cardRef,
   buttonRef,
+  returnRef,
 }: {
   item: RecipeId;
   day: DayState;
   send: PanelProps['send'];
   cardRef: (el: HTMLElement | null) => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
+  returnRef: (el: HTMLButtonElement | null) => void;
 }) {
   const [amount, setAmount] = useState(1);
   const [reserve, setReserve] = useState(day.shop.reserve[item]);
@@ -100,6 +102,7 @@ function ProductShelf({
         </button>
         <button
           disabled={!valid || !shelf || amount > shelfQty}
+          ref={returnRef}
           onClick={() => send({ type: 'unstock', item, amount })}
         >
           {names}を倉庫へ
@@ -153,11 +156,16 @@ export function InventoryPanel({
   const buttons = useRef<Partial<Record<RecipeId, HTMLButtonElement | null>>>(
     {},
   );
+  const returns = useRef<Partial<Record<RecipeId, HTMLButtonElement | null>>>(
+    {},
+  );
   useEffect(() => {
     if (!request) return;
     if (request.target)
       focusTarget(
-        buttons.current[request.target.item],
+        (request.target.type === 'unstock' ? returns : buttons).current[
+          request.target.item
+        ],
         cards.current[request.target.item] ?? heading.current,
       );
     else focusTarget(heading.current, null, false);
@@ -212,6 +220,9 @@ export function InventoryPanel({
             send={send}
             cardRef={(el) => {
               cards.current[item] = el;
+            }}
+            returnRef={(el) => {
+              returns.current[item] = el;
             }}
             buttonRef={(el) => {
               buttons.current[item] = el;

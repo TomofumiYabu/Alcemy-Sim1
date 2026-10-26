@@ -20,7 +20,10 @@ export type Navigation =
         | { type: 'hire' | 'dispatch'; adventurer: AdventurerId }
         | { type: 'destination'; destination: DestinationId };
     }
-  | { screen: 'inventory'; target?: { type: 'stock'; item: RecipeId } }
+  | {
+      screen: 'inventory';
+      target?: { type: 'stock' | 'unstock'; item: RecipeId };
+    }
   | { screen: 'research'; target?: { type: 'research'; id: ResearchId } };
 export type Screen = Navigation['screen'];
 export type NavigationRequest<S extends Screen = Screen> = Extract<

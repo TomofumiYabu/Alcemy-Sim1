@@ -1,7 +1,16 @@
+import {
+  openDay,
+  readDay,
+  runDay,
+  rejectWrites,
+  allowWrites,
+  seedRaw,
+} from './day-helpers';
+import { createDayGame } from '../../src/game/dayEngine';
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
-import { encodeSave, SAVE_KEY } from '../../src/persistence/save';
+import { SAVE_KEY } from '../../src/persistence/save';
 import { closeOverlay, equipment, go, manage } from './navigation';
 
 async function openGame(page: Page) {
@@ -14,6 +23,7 @@ async function openGame(page: Page) {
 test('new workshop completes the real gather-craft-sell-research loop and restores all work', async ({
   page,
 }) => {
+  await seedRaw(page, JSON.stringify(createDayGame(42)));
   await openGame(page);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     '星灯りの錬金工房',
@@ -32,18 +42,18 @@ test('new workshop completes the real gather-craft-sell-research loop and restor
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await go(page, '研究'); // Work continues while another screen is visible.
+  await go(page, '研究');
   await page.clock.fastForward(26_000);
-  await expect(page.getByTestId('knowledge')).toHaveText('3');
-  await go(page, '冒険者');
-  await expect(page.getByTestId('adventurer-iris')).toContainText('待機中');
+  await expect(page.getByTestId('knowledge')).toHaveText('0');
+  await runDay(page);
   await go(page, '店・在庫');
-  await expect(page.getByTestId('inventory-potion')).toHaveText('3');
-  await expect(
-    page.getByRole('button', { name: '傷薬を販売', exact: true }),
-  ).toContainText('+36金貨');
-  await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
-  await expect(page.getByTestId('gold')).toHaveText('116');
+  await expect(page.getByTestId('inventory-potion')).toHaveText('1');
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await go(page, '冒険者');
+  await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
+  await runDay(page);
+  await expect(page.getByTestId('knowledge')).toHaveText('3');
+  await expect(page.getByTestId('gold')).toHaveText('92');
   await go(page, '研究');
   await page
     .getByRole('button', { name: '森の恵みを研究', exact: true })
@@ -62,14 +72,14 @@ test('new workshop completes the real gather-craft-sell-research loop and restor
     .click();
   await page.getByRole('button', { name: '空きマス 2-1', exact: true }).click();
   await closeOverlay(page);
-  await expect(page.getByTestId('gold')).toHaveText('71');
+  await expect(page.getByTestId('gold')).toHaveText('47');
   const saved = await page.evaluate(
     (key) => localStorage.getItem(key),
     SAVE_KEY,
   );
   await page.clock.setSystemTime(new Date('2030-01-01T00:00:00Z'));
   await page.reload();
-  await expect(page.getByTestId('gold')).toHaveText('71');
+  await expect(page.getByTestId('gold')).toHaveText('47');
   await expect(
     page.getByRole('button', { name: '調合釜 #2', exact: true }),
   ).toBeVisible();
@@ -106,7 +116,8 @@ test('placement is atomic and competing machines cannot consume the same materia
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.fastForward(9_000);
+  await runDay(page);
+  await equipment(page);
   await expect(page.getByTestId('equipment-detail')).toContainText('素材待ち');
   await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('2');
@@ -140,24 +151,23 @@ test('corrupt saves are protected until a confirmed reset and the reset is persi
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('storage quota failure is visible and does not stop the current game', async ({
+test('storage failure leaves preparation and funds unchanged until the retry succeeds', async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    Storage.prototype.setItem = () => {
-      throw new DOMException('quota', 'QuotaExceededError');
-    };
-  });
-  await openGame(page);
+  await openDay(page);
+  const before = await readDay(page);
+  await rejectWrites(page, SAVE_KEY);
   await go(page, '冒険者');
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('保存に失敗');
-  await expect(page.getByTestId('gold')).toHaveText('80');
-  await expect(page.getByRole('status')).toHaveText('保存に失敗');
+  await expect(page.getByTestId('gold')).toHaveText('100');
+  expect(await readDay(page)).toEqual(before);
+  await allowWrites(page);
+  await page.getByRole('button', { name: '保存を再試行', exact: true }).click();
+  await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-  await go(page, '店・在庫');
-  await page.clock.fastForward(15_000);
-  await expect(page.getByTestId('inventory-herb')).toHaveText('8');
+  await runDay(page);
+  expect((await readDay(page)).world.inventory.herb).toBe(8);
 });
 
 test('research unlocks automation, distillation, the ruins and a sellable mana potion', async ({
@@ -169,13 +179,7 @@ test('research unlocks automation, distillation, the ruins and a sellable mana p
   fixture.inventory.herb = 30;
   fixture.inventory.water = 20;
   fixture.inventory.crystal = 4;
-  await page.addInitScript(
-    ({ key, value }) => {
-      if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
-    },
-    { key: SAVE_KEY, value: encodeSave(fixture) },
-  );
-  await openGame(page);
+  await openDay(page, createDayGame(2, fixture));
   await go(page, '研究');
   for (const name of [
     '森の恵み',
@@ -220,9 +224,15 @@ test('research unlocks automation, distillation, the ruins and a sellable mana p
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
   await go(page, '店・在庫');
-  await page.clock.fastForward(31_000);
+  await runDay(page);
+  await runDay(page);
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-mana')).toHaveText('1');
-  await page.getByRole('button', { name: '魔力薬を販売', exact: true }).click();
+  await page
+    .getByRole('button', { name: '傷薬の棚枠を空ける', exact: true })
+    .click();
+  await page.getByRole('button', { name: '魔力薬を棚へ', exact: true }).click();
+  await runDay(page);
   await expect(page.getByTestId('gold')).toHaveText('543');
   await go(page, '冒険者');
   await expect(page.getByTestId('adventurer-rowan')).toContainText('探索中');
@@ -261,5 +271,8 @@ test('hidden time is not added when returning to the workshop', async ({
     document.dispatchEvent(new Event('visibilitychange'));
   });
   await page.clock.fastForward(15_000);
+  await expect(page.getByTestId('inventory-herb')).toHaveText('4');
+  await runDay(page);
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-herb')).toHaveText('8');
 });

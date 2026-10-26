@@ -1,5 +1,6 @@
 import {
   destinations,
+  items,
   equipmentTypes,
   recipes,
   research,
@@ -7,8 +8,21 @@ import {
 import { unlocked } from '../game/engine';
 import type { DestinationId, GameState, ItemId, RecipeId } from '../game/types';
 import type { GuidedAction } from './navigation';
+import type { Shelf } from '../game/dayTypes';
 export type MaterialSource = GuidedAction;
-export function materialSource(state: GameState, item: ItemId): MaterialSource {
+export function materialSource(
+  state: GameState,
+  item: ItemId,
+  shelves: readonly Shelf[] = [],
+): MaterialSource {
+  if (shelves.some((row) => row.item === item && row.quantity > 0))
+    return {
+      navigation: {
+        screen: 'inventory',
+        target: { type: 'unstock', item: item as RecipeId },
+      },
+      label: `棚の${items[item].name}を倉庫へ戻す`,
+    };
   const expedition = (Object.keys(destinations) as DestinationId[]).find(
     (id) => (destinations[id].rewards[item] ?? 0) > 0,
   );

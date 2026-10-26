@@ -106,6 +106,7 @@ export function useGame() {
         } else setNotice(result.error);
         return false;
       }
+      if (command.type === 'finish-day') clearFeedback();
       update(result.state);
       setSaveError(null);
       setSaved(true);
@@ -113,7 +114,7 @@ export function useGame() {
       publishFeedback(result.events);
       return true;
     },
-    [update, publishFeedback],
+    [update, publishFeedback, clearFeedback],
   );
   const reset = () => {
     if (

@@ -18,6 +18,7 @@ import { Icon } from './Icon';
 
 export function EquipmentDetail({
   state,
+  shelves,
   send,
   equipment,
   onMove,
@@ -38,7 +39,7 @@ export function EquipmentDetail({
   const sources = [
     ...new Map(
       missing.map(([id]) => {
-        const source = materialSource(state, id);
+        const source = materialSource(state, id, shelves);
         return [JSON.stringify(source.navigation), source];
       }),
     ).values(),

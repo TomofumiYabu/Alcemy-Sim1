@@ -226,6 +226,7 @@ export function App() {
                 <WorkshopPanel
                   key={resetEpoch}
                   state={state}
+                  shelves={day.shop.shelves}
                   send={send}
                   request={navigation.screen === 'workshop' ? navigation : null}
                   navigate={navigate}

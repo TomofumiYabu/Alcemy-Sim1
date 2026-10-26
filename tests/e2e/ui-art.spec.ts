@@ -1,3 +1,5 @@
+import { openDay, runDay, seedRaw } from './day-helpers';
+import { createDayGame } from '../../src/game/dayEngine';
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
@@ -30,7 +32,8 @@ test('room, cauldron and Iris load and the cauldron only lights while a batch is
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(100);
+  await runDay(page);
+  await equipment(page);
   await expect(
     page.getByTestId('equipment-detail').locator('.cauldron-artwork'),
   ).toHaveAttribute('data-active', 'true');
@@ -41,7 +44,8 @@ test('room, cauldron and Iris load and the cauldron only lights while a batch is
   await expect(
     page.getByTestId('equipment-detail').locator('.cauldron-fire'),
   ).toHaveCount(1);
-  await page.clock.runFor(8_000);
+  await runDay(page);
+  await equipment(page);
   await expect(page.locator('.cauldron-fire')).toHaveCount(0);
   await expect(page.getByTestId('equipment-detail')).toContainText('停止中');
   await go(page, '店・在庫');
@@ -54,6 +58,7 @@ test('room, cauldron and Iris load and the cauldron only lights while a batch is
 test('real completion, return, sale and research show their results and a reload replays none', async ({
   page,
 }) => {
+  await seedRaw(page, JSON.stringify(createDayGame(42)));
   await open(page);
   await go(page, '冒険者');
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
@@ -63,26 +68,26 @@ test('real completion, return, sale and research show their results and a reload
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
   await closeOverlay(page);
-  await page.clock.runFor(8_100);
+  await runDay(page);
   await expect(page.locator('[data-feedback="crafted"]')).toContainText(
     '傷薬 +1',
   );
   await expect(page.locator('.craft-pop')).toContainText('+1');
-  await page.clock.runFor(6_900);
+
   await expect(page.locator('[data-feedback="returned"]')).toContainText(
     'イリスが帰還',
   );
   await expect(page.locator('[data-feedback="returned"]')).toContainText(
     '薬草 +4',
   );
-  await page.clock.runFor(9_300);
   await go(page, '店・在庫');
-  await expect(page.getByTestId('inventory-potion')).toHaveText('3');
-  await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
-  await expect(page.locator('[data-feedback="sold"]')).toContainText(
-    '金貨 +36',
-  );
-  await expect(page.getByTestId('gold')).toHaveText('116');
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await go(page, '冒険者');
+  await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
+  await runDay(page, false);
+  await expect(page.getByTestId('day-report')).toContainText('売上 12金貨');
+  await expect(page.getByTestId('day-report')).toContainText('傷薬 2個完成');
+  await closeOverlay(page);
   await go(page, '研究');
   await page
     .getByRole('button', { name: '森の恵みを研究', exact: true })
@@ -99,7 +104,7 @@ test('real completion, return, sale and research show their results and a reload
   await expect(page.locator('.feedback-card')).toHaveCount(0);
   await page.clock.runFor(3_000);
   await expect(page.locator('.feedback-card')).toHaveCount(0);
-  await expect(page.getByTestId('gold')).toHaveText('96');
+  await expect(page.getByTestId('gold')).toHaveText('72');
 });
 
 test('twenty-four simultaneous completions produce one accurate message and clear when hidden', async ({
@@ -125,7 +130,7 @@ test('twenty-four simultaneous completions produce one accurate message and clea
     { key: SAVE_KEY, value: encodeSave(state) },
   );
   await open(page);
-  await page.clock.runFor(8_100);
+  await runDay(page);
   await expect(page.locator('.feedback-card')).toHaveCount(1);
   await expect(page.locator('[data-feedback="crafted"]')).toContainText(
     '傷薬 +24',
@@ -169,6 +174,7 @@ test('failed artwork retains names, controls, production and selling', async ({
       body: 'invalid image payload',
     }),
   );
+  await seedRaw(page, JSON.stringify(createDayGame(42)));
   await open(page);
   await expect(page.locator('[data-art="workshop"]')).toHaveAttribute(
     'data-failed',
@@ -185,10 +191,11 @@ test('failed artwork retains names, controls, production and selling', async ({
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(8_100);
+  await runDay(page);
   await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
-  await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await runDay(page);
   await expect(page.getByTestId('gold')).toHaveText('112');
 });
 
@@ -201,7 +208,7 @@ test('system and manual reduced motion keep results readable with animation disa
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(100);
+  await runDay(page);
   expect(
     await page
       .locator('.cauldron-liquid i')
@@ -221,7 +228,7 @@ test('system and manual reduced motion keep results readable with animation disa
       .first()
       .evaluate((element) => getComputedStyle(element).display),
   ).toBe('none');
-  await page.clock.runFor(8_000);
+  await runDay(page);
   await expect(page.locator('[data-feedback="crafted"]')).toContainText(
     '傷薬 +1',
   );
@@ -248,17 +255,12 @@ test('a waiting tab and the next owner never replay another session’s feedback
   page,
   context,
 }) => {
-  const state = createGame();
-  state.inventory.potion = 3;
-  await page.addInitScript(
-    ({ key, value }) => {
-      if (!localStorage.getItem(key)) localStorage.setItem(key, value);
-    },
-    { key: SAVE_KEY, value: encodeSave(state) },
-  );
-  await open(page);
+  const data = createDayGame(42);
+  data.world.inventory.potion = 3;
+  await openDay(page, data);
   await go(page, '店・在庫');
-  await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await runDay(page);
   await expect(page.locator('[data-feedback="sold"]')).toBeVisible();
   const other = await context.newPage();
   await open(other, false);
@@ -266,13 +268,13 @@ test('a waiting tab and the next owner never replay another session’s feedback
   await expect(other.locator('.feedback-card')).toHaveCount(0);
   await page.close();
   await expect(other.getByRole('status')).toContainText(/自動保存|保存済み/);
-  await expect(other.getByTestId('gold')).toHaveText('136');
+  await expect(other.getByTestId('gold')).toHaveText('112');
   await expect(other.locator('.feedback-card')).toHaveCount(0);
   await equipment(other);
   await other
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await other.clock.runFor(8_100);
+  await runDay(other);
   await expect(other.locator('[data-feedback="crafted"]')).toContainText(
     '傷薬 +1',
   );

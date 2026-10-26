@@ -116,3 +116,38 @@ test('repeated day clicks and report reopening never settle a second day', async
     .click();
   expect(await readDay(page)).toEqual(acknowledged);
 });
+
+test('material guidance returns displayed extract to the warehouse before manufacturing can use it', async ({
+  page,
+}) => {
+  const data = createDayGame(42);
+  data.world.research = [...researchIds];
+  data.world.equipment[0]!.recipe = 'mana';
+  data.world.inventory.crystal = 1;
+  data.shop.shelves = [{ item: 'extract', quantity: 1 }];
+  await openDay(page, data);
+  const before = await readDay(page);
+  await equipment(page);
+  await page
+    .getByRole('button', { name: '棚の薬草エキスを倉庫へ戻す →', exact: true })
+    .click();
+  await expect(
+    page.getByRole('button', { name: '薬草エキスを倉庫へ', exact: true }),
+  ).toBeFocused();
+  expect(await readDay(page)).toEqual(before);
+  await page
+    .getByRole('button', { name: '薬草エキスを倉庫へ', exact: true })
+    .click();
+  expect((await readDay(page)).world.inventory.extract).toBe(1);
+  await equipment(page);
+  await page
+    .getByRole('button', { name: '自動合成を開始', exact: true })
+    .click();
+  await runDay(page);
+  const working = await readDay(page);
+  expect(working.world.inventory.extract).toBe(0);
+  expect(working.shop.shelves[0]!.quantity).toBe(0);
+  expect(working.world.equipment[0]!.job?.remaining).toBe(10);
+  await runDay(page);
+  expect((await readDay(page)).world.inventory.mana).toBe(1);
+});

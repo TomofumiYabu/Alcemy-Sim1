@@ -1,3 +1,5 @@
+import { runDay, openDay } from './day-helpers';
+import { createDayGame } from '../../src/game/dayEngine';
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
@@ -161,7 +163,7 @@ test('display, notification and sound preferences persist independently without 
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(8100);
+  await runDay(page);
   await closeOverlay(page);
   await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
@@ -245,13 +247,9 @@ test('sound requires opt-in plus a gesture, stays muted at zero and never replay
     }
     Object.assign(window, { AudioContext: FakeAudioContext });
   });
-  const state = createGame();
-  state.inventory.potion = 3;
-  state.inventory.extract = 2;
-  state.inventory.mana = 1;
-  await open(page, state);
-  await go(page, '店・在庫');
-  await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
+  const day = createDayGame(42);
+  day.world.inventory.potion = 6;
+  await openDay(page, day);
   const counts = () =>
     page.evaluate(
       () =>
@@ -261,21 +259,22 @@ test('sound requires opt-in plus a gesture, stays muted at zero and never replay
           }
         ).audioTest,
     );
+  await go(page, '店・在庫');
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await runDay(page);
   expect(await counts()).toEqual({ contexts: 0, tones: 0 });
   await settings(page);
   await page.getByLabel('出来事の音を鳴らす', { exact: true }).check();
   expect(await counts()).toEqual({ contexts: 0, tones: 0 });
-  await closeOverlay(page);
   await go(page, '店・在庫');
-  await page
-    .getByRole('button', { name: '薬草エキスを販売', exact: true })
-    .click();
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await runDay(page);
   expect(await counts()).toEqual({ contexts: 1, tones: 1 });
   await settings(page);
   await page.getByLabel('音量', { exact: true }).fill('0');
-  await closeOverlay(page);
   await go(page, '店・在庫');
-  await page.getByRole('button', { name: '魔力薬を販売', exact: true }).click();
+  await page.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+  await runDay(page);
   expect((await counts()).tones).toBe(1);
   await page.reload();
   expect(await counts()).toEqual({ contexts: 0, tones: 0 });
@@ -286,6 +285,7 @@ test('all remaining art decodes and a still finishes its reserved batch before g
 }) => {
   const state = advanced();
   state.equipment[0]!.recipe = 'potion';
+  state.inventory.herb = 100;
   await open(page, state);
   await go(page, '冒険者');
   for (const name of [
@@ -309,7 +309,8 @@ test('all remaining art decodes and a still finishes its reserved batch before g
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(100);
+  await runDay(page);
+  await equipment(page, '蒸留器 #2');
   await expect(
     page.getByTestId('equipment-detail').locator('.still-artwork'),
   ).toHaveAttribute('data-active', 'true');
@@ -317,10 +318,11 @@ test('all remaining art decodes and a still finishes its reserved batch before g
     .getByRole('button', { name: '次の合成を停止', exact: true })
     .click();
   await expect(page.getByTestId('equipment-detail')).toContainText('仕上げ中');
-  await page.clock.runFor(12000);
+  await runDay(page);
+  await equipment(page, '蒸留器 #2');
   await expect(
     page.getByTestId('equipment-detail').locator('.cauldron-fire'),
   ).toHaveCount(0);
   await go(page, '店・在庫');
-  await expect(page.getByTestId('inventory-extract')).toHaveText('1');
+  await expect(page.getByTestId('inventory-extract')).toHaveText('2');
 });
