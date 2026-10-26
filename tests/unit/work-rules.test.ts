@@ -91,7 +91,7 @@ describe('captured work retains the released save contract', () => {
     const second = structuredClone(currentRules);
     second.recipes.potion = { ticks: 90, knowledge: 2 };
     second.destinations.forest = { ticks: 170, rewards: { herb: 7, water: 3 } };
-    Object.defineProperty(contentVersions, 2, {
+    Object.defineProperty(contentVersions, 99, {
       value: second,
       configurable: true,
     });
@@ -106,7 +106,7 @@ describe('captured work retains the released save contract', () => {
         y: 0,
         recipe: 'potion',
         enabled: false,
-        job: { ...craft, contentVersion: 2, recipe: 'potion', remaining: 20 },
+        job: { ...craft, contentVersion: 99, recipe: 'potion', remaining: 20 },
       });
       state.nextEquipmentId = 3;
       const trip = expeditionOutcome(
@@ -118,14 +118,14 @@ describe('captured work retains the released save contract', () => {
       state.adventurers[1]!.hired = true;
       state.adventurers[1]!.trip = {
         ...trip,
-        contentVersion: 2,
+        contentVersion: 99,
         destination: 'forest',
         remaining: 170,
       };
       const restored = decodeSave(encodeSave(state));
       expect(
         restored.equipment.map((entry) => entry.job?.contentVersion),
-      ).toEqual([1, 2]);
+      ).toEqual([1, 99]);
       const progressed = advanceTicks(restored, 120);
       expect(progressed.inventory.potion).toBe(2);
       expect(progressed.knowledge).toBe(3);
@@ -137,7 +137,7 @@ describe('captured work retains the released save contract', () => {
       expect(decodeSave(encodeSave(progressed))).toEqual(progressed);
       expect(advanceTicks(progressed, 50).inventory.herb).toBe(13);
     } finally {
-      Reflect.deleteProperty(contentVersions, 2);
+      Reflect.deleteProperty(contentVersions, 99);
     }
   });
 

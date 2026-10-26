@@ -121,7 +121,7 @@ function log(state: GameState, message: string) {
   state.log.unshift({ tick: state.tick, message });
   state.log = state.log.slice(0, 30);
 }
-function startTrip(
+export function startTrip(
   state: GameState,
   adventurer: Adventurer,
   destination: DestinationId,
@@ -341,62 +341,73 @@ export function advanceWithEvents(
   if (count === 0) return { state: current, events: [] };
   const state = structuredClone(current);
   const events: GameEvent[] = [];
-  const equipment = [...state.equipment].sort((a, b) => a.id - b.id);
-  const adventurers = [...state.adventurers].sort((a, b) =>
+  for (let tick = 0; tick < count; tick++) advanceWorkUnit(state, events);
+  return { state, events };
+}
+
+/** Mutates an isolated candidate only. Daily processing also starts work at point zero. */
+export function startIdleEquipment(state: GameState) {
+  for (const entry of [...state.equipment].sort((a, b) => a.id - b.id)) {
+    if (!entry.enabled || entry.job || missingMaterials(state, entry).length)
+      continue;
+    for (const [item, amount] of Object.entries(
+      recipes[entry.recipe].inputs,
+    ) as [ItemId, number][])
+      state.inventory[item] -= amount;
+    const preview = getCraftPreview(state, entry.recipe);
+    entry.job = { ...preview, remaining: preview.total };
+  }
+}
+
+/** One work point; the final daily point finishes work but starts no new work. */
+export function advanceWorkUnit(
+  state: GameState,
+  events: GameEvent[],
+  restart = true,
+) {
+  state.tick++;
+  for (const adventurer of [...state.adventurers].sort((a, b) =>
     a.id.localeCompare(b.id),
-  );
-  for (let tick = 0; tick < count; tick++) {
-    state.tick++;
-    for (const adventurer of adventurers) {
-      const trip = adventurer.trip;
-      if (trip && --trip.remaining === 0) {
-        for (const item of itemIds) state.inventory[item] += trip.rewards[item];
-        state.stats.expeditions++;
-        events.push({
-          type: 'returned',
-          tick: state.tick,
-          adventurerId: adventurer.id,
-          destination: trip.destination,
-          rewards: { ...trip.rewards },
-        });
-        log(
-          state,
-          `${adventurerTypes[adventurer.id].name}が帰還。${itemIds
-            .filter((id) => trip.rewards[id] > 0)
-            .map((id) => `${items[id].name} +${trip.rewards[id]}`)
-            .join(' / ')}。`,
-        );
-        adventurer.trip = null;
-        if (adventurer.auto) startTrip(state, adventurer, trip.destination);
-      }
-    }
-    for (const entry of equipment) {
-      const job = entry.job;
-      if (job && --job.remaining === 0) {
-        state.inventory[job.recipe]++;
-        state.knowledge += job.knowledge;
-        state.stats.crafted++;
-        events.push({
-          type: 'crafted',
-          tick: state.tick,
-          equipmentId: entry.id,
-          item: job.recipe,
-          knowledge: job.knowledge,
-        });
-        log(state, `${items[job.recipe].name}が完成。知識 +${job.knowledge}。`);
-        entry.job = null;
-      }
-    }
-    for (const entry of equipment) {
-      if (!entry.enabled || entry.job || missingMaterials(state, entry).length)
-        continue;
-      for (const [item, amount] of Object.entries(
-        recipes[entry.recipe].inputs,
-      ) as [ItemId, number][])
-        state.inventory[item] -= amount;
-      const preview = getCraftPreview(state, entry.recipe);
-      entry.job = { ...preview, remaining: preview.total };
+  )) {
+    const trip = adventurer.trip;
+    if (trip && --trip.remaining === 0) {
+      for (const item of itemIds) state.inventory[item] += trip.rewards[item];
+      state.stats.expeditions++;
+      events.push({
+        type: 'returned',
+        tick: state.tick,
+        adventurerId: adventurer.id,
+        destination: trip.destination,
+        rewards: { ...trip.rewards },
+      });
+      log(
+        state,
+        `${adventurerTypes[adventurer.id].name}が帰還。${itemIds
+          .filter((id) => trip.rewards[id] > 0)
+          .map((id) => `${items[id].name} +${trip.rewards[id]}`)
+          .join(' / ')}。`,
+      );
+      adventurer.trip = null;
+      if (adventurer.auto && restart)
+        startTrip(state, adventurer, trip.destination);
     }
   }
-  return { state, events };
+  for (const entry of [...state.equipment].sort((a, b) => a.id - b.id)) {
+    const job = entry.job;
+    if (job && --job.remaining === 0) {
+      state.inventory[job.recipe]++;
+      state.knowledge += job.knowledge;
+      state.stats.crafted++;
+      events.push({
+        type: 'crafted',
+        tick: state.tick,
+        equipmentId: entry.id,
+        item: job.recipe,
+        knowledge: job.knowledge,
+      });
+      log(state, `${items[job.recipe].name}が完成。知識 +${job.knowledge}。`);
+      entry.job = null;
+    }
+  }
+  if (restart) startIdleEquipment(state);
 }

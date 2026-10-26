@@ -37,7 +37,7 @@ describe('published v1 compatibility and historical job rules', () => {
     'restores fixed published %s work and completes it without changing captured conditions',
     (name) => {
       const raw = fixture(name);
-      const original = JSON.parse(raw);
+      const original = { ...JSON.parse(raw), contentVersion: CONTENT_VERSION };
       const restored = decodeSave(raw);
       expect(restored).toEqual(original);
       expect(decodeSave(encodeSave(restored))).toEqual(original);
