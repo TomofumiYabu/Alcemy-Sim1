@@ -1,10 +1,17 @@
 # GitHub Pages公開
 
-## T1の未公開状態
+## T1の公開済み状態
 
-`codex/day-turn-shop`の1日1ターン・店舗営業は実装/ローカル検証済みで、draft PRとCIまでが今回の範囲。RF公開許可を今回のマージ・公開へ流用しない。公開先への反映、配信、公開後の検証は未実施。下記の公開済み仕様はRF時点の記録で、T1の実装結果は [納品記録](T1-DELIVERY-2026-10-26.md) を参照。
+公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 
-## 公開対象と状態
+ユーザーの今回分の明示許可を受け、[PR #5](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5)をmainへマージ。コミットは `8b700f301b17f50d0762d2e008bd2fb4bb4dc7e7`。1日1ターン・陳列品の来客販売・日報・schema 3移行を公開済み。
+
+- [公開CI #16・attempt 2](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40344383900/attempts/2) は243件成功、build/upload/deploy成功。2026-10-26 15:19:41 UTCに配信完了。初回はUbuntu依存取得の遅延で15分制限に達し、同じSHAの再実行で解消した。
+- 2026-10-26 15:20:58 UTCまでに公開16ファイルのHTTP 200・本番distとのSHA-256一致、PC/モバイル・日送り/陳列/日報/再開・固定v1移行・タブ引継ぎ等6組成功を確認。旧v2の移行/バックアップ失敗・日送り/日報保存失敗と再試行も追加確認し、エラー0。
+- 公開JS `index-DuAhkuky.js`、CSS `index-OqT0E9l9.css`。公開応答はTLSを検証するcurl経路で取得し、公開HTTPS originの隔離Chromiumへ渡した。ローカルdistの差し替えなし。
+- 詳細と未検証範囲は [T1納品記録](T1-DELIVERY-2026-10-26.md#公開後の実測確認)。結果は `.cache/verification/day-published/`。実機・Firefox/WebKit・Chromium自身の直接HTTPS経路は未評価。
+
+## 前回の公開（RF）
 
 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/
 

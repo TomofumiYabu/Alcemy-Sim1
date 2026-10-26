@@ -1,6 +1,6 @@
 # ゲーム仕様 v0.2（1日1ターン・店舗営業）
 
-状態: T1を作業ブランチで実装済み。まだmainへマージ・公開していません。公開中はRF完了版です。日次・店舗の設計根拠は [ターン制案](TURN-BASED-DESIGN-2026-10-25.md) と [店舗営業案](SHOP-SIMULATION-DESIGN-2026-10-26.md)、検証と反映状態はPROGRESSを参照。
+状態: T1をPR #5からmainへマージし、GitHub Pagesへ公開済み（`8b700f3`）。公開CI243件と公開後のPC/モバイル・保存互換性を確認。日次・店舗の設計根拠は [ターン制案](TURN-BASED-DESIGN-2026-10-25.md) と [店舗営業案](SHOP-SIMULATION-DESIGN-2026-10-26.md)、検証と反映状態はPROGRESSを参照。
 
 ## 体験とMVPの完了目標
 

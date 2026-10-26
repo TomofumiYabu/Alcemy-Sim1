@@ -1,12 +1,21 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-26。現在のT1は「1日1ターン＋来店客が陳列品を買う店舗営業」の実装・ローカル検証とPR CIまで完了。[Draft PR #5](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5)へ提出済み。作業ブランチは `codex/day-turn-shop`。過去のRFは完了・公開済み（`c1b76ad`）で、今回の新機能はマージ・公開していない。詳細は [T1納品記録](T1-DELIVERY-2026-10-26.md)。
+最終更新: 2026-10-26。T1「1日1ターン＋来店客が陳列品を買う店舗営業」は実装・検証・マージ・Pages公開・公開後確認まで完了。[PR #5](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5)はmerged、マージコミットは `8b700f301b17f50d0762d2e008bd2fb4bb4dc7e7`。詳細は [T1納品記録](T1-DELIVERY-2026-10-26.md)。
 
-## T1提出・CI結果
+## T1公開完了
+
+- ユーザーが2026-10-26 14:54 UTCに今回のマージ・公開・公開後確認を「進めて」と明示許可。head `567d438`・最終CI #15の243件成功・競合なし・mainに他者変更なしを照合してDraft解除とマージを実行した。
+- [公開CI #16・attempt 2](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40344383900/attempts/2) は83＋80＋80＝243件、build/upload/deployすべて成功。初回はUbuntu依存19.9MBの取得が14分39秒かかり15分制限でcancelled。原因をログで確認し、同じSHAのbuildを1回再実行して成功。アプリ・CI設定の変更なし。
+- 公開URL https://tomofumiyabu.github.io/Alcemy-Sim1/ で16ファイルのHTTP 200・SHA-256一致とPC/モバイル・一巡/日報/再読込/旧v1/所有タブ等6組が成功。さらに旧v2のバックアップ拒否/再試行・資産/残作業保持、日送り/日報の保存失敗と同結果の再試行、未確認日報の再開も成功。ブラウザーエラー0。
+- 実行元はcleanな `8b700f3`。公開JS `index-DuAhkuky.js`、CSS `index-OqT0E9l9.css`。公開後確認は15:20:58 UTCまでに完了。実公開応答をTLS検証して取得し、隔離Chromiumの公開originで確認した。利用者のセーブは変更していない。
+- 公開後の記録は `.cache/verification/day-published/`、追加旧v2検証は `.cache/verify-day-published-save.mjs`。今回の公開承認拒否・保留・結果不明は残らない。実機/Firefox/WebKit/長期バランスは未検証。
+- 以降は公開前の段階別記録。公開後に変更するのは文書のみで、追加配信を起動しない。
+
+## T1提出・CI結果（公開前の記録）
 
 - PR #5はdraft/open/unmerged。このタスクへ添付済み、main `69b8538` と競合なし。head `d7a84a2` の [CI #14](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40322964605) はbuild成功、ログで83＋80＋80＝243件成功を確認。upload/deployはskipped。
 - 本節はCI成功後の文書追記。最終文書headにも自動CIが走るため、最新の [Checks](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5/checks) と最終報告で結果を照合する。アプリの変更は `6912814` 以降なし。
-- 検証用previewは停止、作業は通常pushで保存。今回のマージ・公開・配信後確認は未実施で、過去のRF公開許可を流用していない。承認拒否・環境待ち・結果不明は残っていない。
+- 検証用previewは停止、作業は通常pushで保存。この時点ではマージ・公開・配信後確認は未実施。後続の今回分の明示許可により上記の公開を完了し、過去のRF公開許可を流用していない。承認拒否・環境待ち・結果不明は残っていない。
 
 ## T1最終ローカル結果
 
