@@ -1,5 +1,9 @@
 # GitHub Pages公開
 
+## T1の未公開状態
+
+`codex/day-turn-shop`の1日1ターン・店舗営業は実装/ローカル検証済みで、draft PRとCIまでが今回の範囲。RF公開許可を今回のマージ・公開へ流用しない。公開先への反映、配信、公開後の検証は未実施。下記の公開済み仕様はRF時点の記録で、T1の実装結果は [納品記録](T1-DELIVERY-2026-10-26.md) を参照。
+
 ## 公開対象と状態
 
 公開URL: https://tomofumiyabu.github.io/Alcemy-Sim1/

@@ -1,3 +1,4 @@
+import { runDay } from './day-helpers';
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
@@ -36,7 +37,7 @@ test('material guidance follows hiring, dispatch and return instead of keeping a
   await expect(guidance).toContainText('探索先を確認して派遣してください');
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
   await expect(guidance).toContainText('探索中');
-  await page.clock.runFor(15000);
+  await runDay(page);
   await expect(guidance).toContainText('探索先を確認して派遣してください');
 });
 

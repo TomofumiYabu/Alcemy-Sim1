@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { equipmentTypes } from '../game/content';
 import { GRID_CAPACITY, GRID_COLUMNS, GRID_ROWS } from '../game/config';
-import { unlocked } from '../game/engine';
+import { missingMaterials, unlocked } from '../game/engine';
 import type { EquipmentKind } from '../game/types';
 import { EquipmentDetail } from './EquipmentDetail';
 import { Dialog } from './Dialog';
@@ -18,6 +18,7 @@ type Placement =
   { type: 'buy'; kind: EquipmentKind } | { type: 'move'; id: number } | null;
 export function WorkshopPanel({
   state,
+  shelves,
   send,
   request,
   navigate,
@@ -144,6 +145,7 @@ export function WorkshopPanel({
   const details = (
     <EquipmentDetail
       state={state}
+      shelves={shelves}
       send={send}
       equipment={equipment}
       disabled={disabled}
@@ -217,7 +219,9 @@ export function WorkshopPanel({
                   ? '合成中'
                   : '仕上げ中'
                 : entry?.enabled
-                  ? '素材待ち'
+                  ? missingMaterials(state, entry).length
+                    ? '素材待ち'
+                    : '営業待ち'
                   : '停止中';
               const celebration =
                 entry?.id === equipment.id

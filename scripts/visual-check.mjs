@@ -5,7 +5,7 @@ import { verificationFixtures } from './lib/game-fixtures.mjs';
 import { verificationOptions } from './lib/verification-options.mjs';
 
 const options = verificationOptions('visual');
-const { key, advanced, encode } = await verificationFixtures();
+const { key, rich: advanced, dayEncode: encode } = await verificationFixtures();
 const browser = await chromium.launch({
   executablePath: options.executablePath,
 });
@@ -46,6 +46,7 @@ try {
       /自動保存|保存済み/,
     );
     for (const textSize of ['standard', 'largest']) {
+      await page.clock.runFor(3000);
       await page.getByRole('button', { name: '設定', exact: true }).click();
       await page
         .getByLabel('文字の大きさ', { exact: true })
@@ -56,7 +57,7 @@ try {
       for (const [name, id, title] of [
         ['工房', 'workshop', '錬金術工房'],
         ['冒険者', 'expeditions', '冒険者ギルド'],
-        ['在庫・販売', 'inventory', '在庫と販売'],
+        ['店・在庫', 'inventory', '店と在庫'],
         ['研究', 'research', '錬金術の研究'],
       ]) {
         await page
@@ -70,6 +71,7 @@ try {
         await expect(
           page.getByRole('heading', { name: title, exact: true }),
         ).toBeVisible();
+        await page.evaluate(() => window.scrollTo(0, 0));
         await page.screenshot({
           path: `${options.output}/${width}-${id}-${textSize}.png`,
         });
@@ -116,6 +118,31 @@ try {
           });
         }
       }
+      await page
+        .getByRole('button', { name: '1日営業する', exact: true })
+        .click();
+      const report = page.getByRole('dialog', { name: /営業日報$/ });
+      await expect(report).toBeVisible();
+      const overflow = await report.evaluate(
+        (el) => el.scrollWidth > el.clientWidth,
+      );
+      assert.equal(overflow, false, `${width}px ${textSize} daily report`);
+      await report.screenshot({
+        path: `${options.output}/${width}-report-${textSize}.png`,
+      });
+      checks.push({
+        width,
+        height,
+        textSize,
+        screen: 'daily-report',
+        horizontalOverflow: overflow,
+      });
+      await report
+        .getByRole('button', { name: '翌日の準備へ', exact: true })
+        .scrollIntoViewIfNeeded();
+      await report
+        .getByRole('button', { name: '翌日の準備へ', exact: true })
+        .click();
     }
     await page.close();
   }

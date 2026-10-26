@@ -9,7 +9,7 @@ import {
 } from '../game/engine';
 import { recipeIds } from '../game/types';
 import type { Equipment, RecipeId } from '../game/types';
-import { seconds } from './format';
+import { workAmount } from './format';
 import type { Navigate, PanelProps } from './types';
 import { EquipmentArtwork, ItemArtwork } from './Artwork';
 import type { ItemId } from '../game/types';
@@ -18,6 +18,7 @@ import { Icon } from './Icon';
 
 export function EquipmentDetail({
   state,
+  shelves,
   send,
   equipment,
   onMove,
@@ -38,7 +39,7 @@ export function EquipmentDetail({
   const sources = [
     ...new Map(
       missing.map(([id]) => {
-        const source = materialSource(state, id);
+        const source = materialSource(state, id, shelves);
         return [JSON.stringify(source.navigation), source];
       }),
     ).values(),
@@ -106,7 +107,7 @@ export function EquipmentDetail({
       <div className="production-meta">
         <span>
           <Icon name="clock" />{' '}
-          {seconds(
+          {workAmount(
             equipment.job?.total ?? recipeTicks(state, equipment.recipe),
           )}{' '}
           / 個
@@ -125,19 +126,21 @@ export function EquipmentDetail({
           />
           <p className="production-status">
             {equipment.enabled ? '合成中' : '仕上げ中（次の合成は停止）'} · あと
-            {seconds(equipment.job.remaining)}
+            {workAmount(equipment.job.remaining)}
             {equipment.job.total !== recipeTicks(state, equipment.recipe) &&
               '（開始時の速度）'}
           </p>
-          <small className="muted">合成が終わるとレシピを変更できます。</small>
+          <small className="muted">
+            残作業は次の営業で進みます。合成が終わるとレシピを変更できます。
+          </small>
         </>
       ) : (
         <p className="production-status">
           {!equipment.enabled
-            ? '停止中 · 開始すると素材を使って繰り返し合成します'
+            ? '停止中 · 稼働を準備すると営業中に繰り返し合成します'
             : missingMaterials(state, equipment).length
               ? `素材待ち：${missingMaterials(state, equipment).join(' / ')} 不足`
-              : '次の合成を準備しています'}
+              : '営業待ち · 次の営業で合成を始めます'}
         </p>
       )}
       <button

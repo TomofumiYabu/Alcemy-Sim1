@@ -1,3 +1,4 @@
+import { runDay } from './day-helpers';
 import { expect, test } from './fixtures';
 import { createGame } from '../../src/game/engine';
 import { GRID_CAPACITY, GRID_COLUMNS } from '../../src/game/config';
@@ -43,14 +44,14 @@ test('a completely occupied workshop can exchange a stopped machine and continue
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await go(page, '在庫・販売');
-  await page.clock.fastForward(11_000);
+  await go(page, '店・在庫');
+  await runDay(page);
   await expect(page.getByTestId('inventory-extract')).toHaveText('1');
   await save(page);
   await page.reload();
   await expect(
     page.getByRole('button', { name: '蒸留器 #1', exact: true }),
   ).toBeVisible();
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-extract')).toHaveText('1');
 });

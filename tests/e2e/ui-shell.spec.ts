@@ -1,3 +1,5 @@
+import { runDay, seedRaw } from './day-helpers';
+import { createDayGame } from '../../src/game/dayEngine';
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 import { createGame } from '../../src/game/engine';
@@ -63,7 +65,7 @@ test('target viewports keep the HUD and navigation visible with usable workshop 
         page.getByRole('button', { name: '自動合成を開始', exact: true }),
       ).toBeInViewport({ ratio: 1 });
     }
-    for (const name of ['冒険者', '在庫・販売', '研究', '工房'] as const) {
+    for (const name of ['冒険者', '店・在庫', '研究', '工房'] as const) {
       await go(page, name);
       await expect(
         page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -116,6 +118,7 @@ test('keyboard alone completes the first loop, places and moves machines, and ca
   page,
   isMobile,
 }) => {
+  await seedRaw(page, JSON.stringify(createDayGame(42)));
   await open(page);
   await keyboardActivate(page, '次の一歩を開く');
   await expect(
@@ -128,9 +131,14 @@ test('keyboard alone completes the first loop, places and moves machines, and ca
   await keyboardActivate(page, '自動合成を開始');
   if (isMobile) await page.keyboard.press('Escape');
   await keyboardActivate(page, '研究');
-  await page.clock.fastForward(26_000);
-  await keyboardActivate(page, '在庫・販売');
-  await keyboardActivate(page, '傷薬を販売');
+  await keyboardActivate(page, '1日営業する');
+  await keyboardActivate(page, '翌日の準備へ');
+  await keyboardActivate(page, '店・在庫');
+  await keyboardActivate(page, '傷薬を棚へ');
+  await keyboardActivate(page, '冒険者');
+  await keyboardActivate(page, 'イリスを派遣');
+  await keyboardActivate(page, '1日営業する');
+  await keyboardActivate(page, '翌日の準備へ');
   await keyboardActivate(page, '研究');
   await keyboardActivate(page, '森の恵みを研究');
   await expect(
@@ -144,12 +152,12 @@ test('keyboard alone completes the first loop, places and moves machines, and ca
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Enter');
   if (isMobile) await page.keyboard.press('Escape');
-  await expect(page.getByTestId('gold')).toHaveText('71');
+  await expect(page.getByTestId('gold')).toHaveText('47');
   // Buying again then cancelling must not spend money.
   await keyboardActivate(page, '調合釜を購入・配置');
   await page.keyboard.press('Escape');
   await expect(page.getByText(/の配置先を選択/)).toHaveCount(0);
-  await expect(page.getByTestId('gold')).toHaveText('71');
+  await expect(page.getByTestId('gold')).toHaveText('47');
   // Reopen #2 from its current grid position and expand management with Enter.
   await page.keyboard.press('Enter');
   const summary = page.getByTestId('equipment-detail').locator('summary');
@@ -166,7 +174,7 @@ test('keyboard alone completes the first loop, places and moves machines, and ca
   await page.keyboard.press('Enter');
   const moved = await page.evaluate(
     (key) =>
-      JSON.parse(localStorage.getItem(key)!).equipment.find(
+      JSON.parse(localStorage.getItem(key)!).world.equipment.find(
         (entry: { id: number }) => entry.id === 2,
       ),
     SAVE_KEY,
@@ -185,7 +193,7 @@ test('200 percent text remains operable and each screen keeps its scroll positio
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '200%';
   });
-  for (const name of ['冒険者', '在庫・販売', '研究', '工房'] as const) {
+  for (const name of ['冒険者', '店・在庫', '研究', '工房'] as const) {
     await go(page, name);
     expect(
       await page.evaluate(
@@ -197,8 +205,8 @@ test('200 percent text remains operable and each screen keeps its scroll positio
         name:
           name === '冒険者'
             ? '冒険者ギルド'
-            : name === '在庫・販売'
-              ? '在庫と販売'
+            : name === '店・在庫'
+              ? '店と在庫'
               : name === '研究'
                 ? '錬金術の研究'
                 : '錬金術工房',
@@ -247,8 +255,8 @@ test('stopping a batch shows finishing and a missing-material route opens expedi
   page,
 }) => {
   const state = createGame();
-  state.inventory.herb = 2;
-  state.inventory.water = 1;
+  state.inventory.herb = 4;
+  state.inventory.water = 2;
   await page.addInitScript(
     ({ key, value }) => {
       if (!localStorage.getItem(key)) localStorage.setItem(key, value);
@@ -260,14 +268,16 @@ test('stopping a batch shows finishing and a missing-material route opens expedi
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await page.clock.runFor(100);
+  await runDay(page);
+  await equipment(page);
   await page
     .getByRole('button', { name: '次の合成を停止', exact: true })
     .click();
   await expect(page.getByTestId('equipment-detail')).toContainText(
     '仕上げ中（次の合成は停止）',
   );
-  await page.clock.runFor(8_000);
+  await runDay(page);
+  await equipment(page);
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();

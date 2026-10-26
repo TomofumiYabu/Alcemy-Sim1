@@ -1,13 +1,16 @@
 import type { GameState } from '../game/types';
+import type { DayState } from '../game/dayTypes';
 import { destinations } from '../game/content';
-import { seconds } from './format';
+import { workAmount } from './format';
 import type { Navigate, Navigation } from './navigation';
 
 export function QuestProgress({
   state,
+  day,
   navigate,
 }: {
   state: GameState;
+  day: DayState;
   navigate: Navigate;
 }) {
   const hired = state.adventurers.find((entry) => entry.hired);
@@ -37,19 +40,22 @@ export function QuestProgress({
       target: { type: 'dispatch', adventurer: hired.id },
     };
   } else if (!state.stats.expeditions && trip) {
-    title = `${destinations[trip.destination].name}からの帰還まであと${seconds(trip.remaining)}`;
-    hint = '待つ間に、初期素材で釜の自動合成を始められます。';
+    title = `${destinations[trip.destination].name}からの帰還まであと${workAmount(trip.remaining)}`;
+    hint = '初期素材で釜の稼働を準備し、「1日営業する」で進めましょう。';
     navigation = { screen: 'workshop', target: { type: 'equipment' } };
   } else if (!state.stats.crafted) {
     title = '釜で傷薬を作ろう';
     hint = '設備を選び、自動合成を開始。完成すると知識も得られます。';
     navigation = { screen: 'workshop', target: { type: 'equipment' } };
   } else if (!state.stats.sold) {
-    title = '完成した傷薬を販売しよう';
-    hint = '在庫・販売で、製品を金貨に換えられます。';
+    title = day.shop.shelves.some((s) => s.quantity > 0)
+      ? '営業してお客さまを迎えよう'
+      : '完成した傷薬を棚へ陳列しよう';
+    hint =
+      '店・在庫で倉庫から棚へ品と数量を移し、1日営業するとお客さまが購入します。';
     navigation = {
       screen: 'inventory',
-      target: { type: 'sell', item: 'potion' },
+      target: { type: 'stock', item: 'potion' },
     };
   } else if (!state.research.length) {
     title = '金貨と知識で最初の研究を進めよう';

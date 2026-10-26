@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 const run = promisify(execFile);
 const options = verificationOptions('public-smoke');
 const { origin, url, output: root } = options;
-const { advanced: advancedFixture, encode } = await verificationFixtures();
+const { fresh, rich, dayEncode } = await verificationFixtures();
 mkdirSync(root, { recursive: true });
 const artifacts = new Map();
 const results = {
@@ -17,7 +17,7 @@ const results = {
   workingTreeDirty: options.workingTreeDirty,
   url,
   transport:
-    'HTTP responses fetched by curl with inherited proxy and CA validation, then passed to Chromium at the public HTTPS origin',
+    'HTTP responses fetched by curl with inherited proxy and CA validation, then passed to Chromium at the target origin',
   artifacts: [],
   checks: [],
   errors: [],
@@ -136,6 +136,11 @@ try {
     await page.bringToFront();
   }
   async function close(page) {
+    const report = page.getByRole('dialog', { name: /営業日報$/ });
+    if (await report.isVisible())
+      await report
+        .getByRole('button', { name: '翌日の準備へ', exact: true })
+        .click();
     for (const title of ['設備の詳細', '設定とヘルプ', '工房の記録']) {
       const dialog = page.getByRole('dialog', { name: title, exact: true });
       if (await dialog.isVisible())
@@ -159,166 +164,24 @@ try {
     await close(page);
     await page.getByRole('button', { name: '設定', exact: true }).click();
   }
-  for (const profile of ['desktop', 'mobile']) {
-    const ctx = await context(
-      profile === 'desktop'
-        ? { viewport: { width: 1440, height: 900 } }
-        : { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
+  const read = (p) =>
+    p.evaluate(
+      (key) => JSON.parse(localStorage.getItem(key)),
+      'alcemy-sim-save-v1',
     );
-    const page = await ctx.newPage();
-    await open(page);
-    await page
-      .getByRole('button', { name: '次の一歩を開く', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: 'イリスを雇う', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: 'イリスを派遣', exact: true })
-      .click();
-    await equipment(page);
-    await page
-      .getByRole('button', { name: '自動合成を開始', exact: true })
-      .click();
-    await go(page, '研究');
-    await page.clock.fastForward(8_100);
-    await expect(page.locator('[data-feedback="crafted"]')).toContainText(
-      '傷薬 +1',
-    );
-    await page.clock.fastForward(17_900);
-    await expect(page.getByTestId('knowledge')).toHaveText('3');
-    await go(page, '在庫・販売');
-    await expect(page.getByTestId('inventory-potion')).toHaveText('3');
-    await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
-    await expect(page.getByTestId('gold')).toHaveText('116');
-    await expect(page.locator('[data-feedback="sold"]')).toContainText(
-      '金貨 +36',
-    );
-    await go(page, '研究');
-    await page
-      .getByRole('button', { name: '森の恵みを研究', exact: true })
-      .click();
-    await expect(
-      page.getByRole('heading', { name: '工房の第一歩、達成！' }),
-    ).toBeVisible();
-    await expect(page.locator('[data-feedback="researched"]')).toContainText(
-      '森の恵み',
-    );
-    await equipment(page);
-    await page.getByTestId('equipment-detail').locator('summary').click();
-    await page
-      .getByRole('button', { name: 'この設備を移動', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: '空きマス 1-1', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: '調合釜を購入・配置', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: '空きマス 2-1', exact: true })
-      .click();
-    await settings(page);
-    await page.getByRole('button', { name: '今すぐ保存', exact: true }).click();
-    await close(page);
-    await expect(page.getByTestId('gold')).toHaveText('71');
-    await page.reload();
-    await expect(
-      page.getByRole('button', { name: '調合釜 #2', exact: true }),
-    ).toBeVisible();
-    await expect(page.locator('.feedback-card')).toHaveCount(0);
-    await page
-      .locator('[data-art] img')
-      .evaluateAll((images) => Promise.all(images.map((img) => img.decode())));
-    await expect(page.getByTestId('gold')).toHaveText('71');
-    assert.equal(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth > innerWidth,
-      ),
-      false,
-    );
-    await page.screenshot({ path: `${root}/${profile}.png`, fullPage: true });
-    await go(page, '研究');
-    await expect(page.getByTestId('research-gathering-1')).toContainText(
-      '研究済み',
-    );
-    results.checks.push({
-      profile,
-      loop: true,
-      placementAndMove: true,
-      restore: true,
-      noHorizontalOverflow: true,
-      artworkDecoded: true,
-      liveFeedback: true,
-      noReplay: true,
-    });
-    if (profile === 'desktop') {
-      const other = await ctx.newPage();
-      await open(other);
-      await expect(other.getByRole('note')).toContainText('待機中');
-      await settings(other);
-      await expect(
-        other.getByRole('button', { name: '今すぐ保存', exact: true }),
-      ).toBeDisabled();
-      await page.close();
-      await expect(
-        other.getByRole('button', { name: '今すぐ保存', exact: true }),
-      ).toBeEnabled();
-      await close(other);
-      await expect(other.getByTestId('gold')).toHaveText('71');
-      results.checks.push({ profile, tabHandoff: true });
-    }
-    await ctx.close();
+  async function day(p, closeReport = true) {
+    await close(p);
+    await p.getByRole('button', { name: '1日営業する', exact: true }).click();
+    const report = p.getByRole('dialog', { name: /営業日報$/ });
+    await expect(report).toBeVisible();
+    if (closeReport)
+      await report
+        .getByRole('button', { name: '翌日の準備へ', exact: true })
+        .click();
+    return report;
   }
-  const legacy = readFileSync('tests/fixtures/v1-inflight.json', 'utf8');
-  const ctx = await context({ viewport: { width: 1366, height: 768 } });
-  await ctx.addInitScript(
-    ({ origin, value }) => {
-      if (
-        location.origin === origin &&
-        !localStorage.getItem('alcemy-sim-save-v1')
-      )
-        localStorage.setItem('alcemy-sim-save-v1', value);
-    },
-    { origin, value: legacy },
-  );
-  const page = await ctx.newPage();
-  await open(page);
-  await settings(page);
-  await page.getByRole('button', { name: '今すぐ保存', exact: true }).click();
-  assert.equal(
-    await page.evaluate(() =>
-      localStorage.getItem('alcemy-sim-save-v1-legacy-backup'),
-    ),
-    legacy,
-  );
-  assert.equal(
-    await page.evaluate(
-      () =>
-        JSON.parse(localStorage.getItem('alcemy-sim-save-v1')).schemaVersion,
-    ),
-    2,
-  );
-  await close(page);
-  await page.reload();
-  await go(page, '在庫・販売');
-  await page.clock.runFor(5_100);
-  await expect(page.getByTestId('inventory-potion')).toHaveText('1');
-  await expect(page.getByTestId('knowledge')).toHaveText('1');
-  results.checks.push({
-    legacyV1: true,
-    originalBackup: true,
-    restoredJobCompleted: true,
-  });
-  await ctx.close();
-  for (const profile of ['desktop', 'mobile']) {
-    const state = advancedFixture;
-    const advanced = await context(
-      profile === 'desktop'
-        ? { viewport: { width: 1366, height: 768 } }
-        : { ...devices['Pixel 7'], viewport: { width: 320, height: 740 } },
-    );
-    await advanced.addInitScript(
+  async function seed(ctx, value) {
+    await ctx.addInitScript(
       ({ origin, value }) => {
         if (
           location.origin === origin &&
@@ -326,37 +189,167 @@ try {
         )
           localStorage.setItem('alcemy-sim-save-v1', value);
       },
-      { origin, value: encode(state) },
+      { origin, value },
     );
-    const p = await advanced.newPage();
+  }
+  for (const profile of ['desktop', 'mobile']) {
+    const ctx = await context(
+      profile === 'desktop'
+        ? { viewport: { width: 1440, height: 900 } }
+        : { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
+    );
+    await seed(ctx, dayEncode(fresh));
+    const p = await ctx.newPage();
     await open(p);
-    await expect(p.locator('.save-state')).toContainText(/自動保存|保存済み/);
+    await expect(p.locator('.save-state')).toHaveText('保存済み');
+    const initial = await read(p);
+    await p.clock.fastForward(86400000);
+    assert.deepEqual(await read(p), initial);
+    await go(p, '冒険者');
+    await p.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
+    await p.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
     await equipment(p);
-    await p
-      .getByRole('button', { name: '蒸留器で薬草エキスを作る →', exact: true })
-      .click();
-    await expect(
-      p.getByTestId('equipment-detail').getByRole('heading'),
-    ).toContainText('蒸留器 #2');
     await p
       .getByRole('button', { name: '自動合成を開始', exact: true })
       .click();
-    await p.clock.runFor(100);
+    await day(p);
+    assert.equal((await read(p)).world.inventory.potion, 1);
+    await go(p, '店・在庫');
+    await p.getByRole('button', { name: '傷薬を棚へ', exact: true }).click();
+    await go(p, '冒険者');
+    await p.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
+    await day(p);
+    assert.equal((await read(p)).world.gold, 92);
+    await go(p, '研究');
+    await p
+      .getByRole('button', { name: '森の恵みを研究', exact: true })
+      .click();
+    await equipment(p);
+    const details = p.getByTestId('equipment-detail').locator('details');
+    if (!(await details.evaluate((el) => el.open)))
+      await details.locator('summary').click();
+    await p
+      .getByRole('button', { name: 'この設備を移動', exact: true })
+      .click();
+    await p.getByRole('button', { name: '空きマス 1-1', exact: true }).click();
+    await close(p);
+    await p
+      .getByRole('button', { name: '調合釜を購入・配置', exact: true })
+      .click();
+    await p.getByRole('button', { name: '空きマス 2-1', exact: true }).click();
+    await close(p);
+    const saved = await read(p);
+    assert.equal(saved.world.gold, 47);
+    await p.reload();
+    await expect(p.locator('.save-state')).toHaveText('保存済み');
+    assert.deepEqual(await read(p), saved);
+    await expect(p.locator('.feedback-card')).toHaveCount(0);
+    await p
+      .locator('[data-art] img')
+      .evaluateAll((images) => Promise.all(images.map((img) => img.decode())));
+    assert.equal(
+      await p.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+      false,
+    );
+    await p.screenshot({ path: `${root}/${profile}.png` });
+    results.checks.push({
+      profile,
+      loop: true,
+      placementAndMove: true,
+      restore: true,
+      noClockProgress: true,
+      noReplay: true,
+      artworkDecoded: true,
+    });
+    if (profile === 'desktop') {
+      const other = await ctx.newPage();
+      await open(other);
+      await expect(other.getByRole('note')).toContainText('待機中');
+      await expect(
+        other.getByRole('button', { name: '1日営業する', exact: true }),
+      ).toBeDisabled();
+      await p.close();
+      await expect(other.locator('.save-state')).toHaveText('保存済み');
+      assert.deepEqual(await read(other), saved);
+      results.checks.push({
+        profile,
+        tabHandoff: true,
+        latestDailyState: true,
+      });
+    }
+    await ctx.close();
+  }
+  {
+    const ctx = await context({ viewport: { width: 1366, height: 768 } });
+    const legacy = readFileSync(
+      new URL('../tests/fixtures/v1-inflight.json', import.meta.url),
+      'utf8',
+    );
+    await seed(ctx, legacy);
+    const p = await ctx.newPage();
+    await open(p);
+    await expect(p.locator('.save-state')).toHaveText('保存済み');
+    const before = await read(p);
+    assert.equal(before.schemaVersion, 3);
+    assert.equal(before.completedDays, 0);
+    const backup = await p.evaluate(() => [
+      localStorage.getItem('alcemy-sim-save-v1-legacy-backup'),
+      localStorage.getItem('alcemy-sim-save-v1-before-day-turn-v3'),
+    ]);
+    assert.deepEqual(backup, [legacy, legacy]);
+    await day(p);
+    const after = await read(p);
+    assert.ok(after.world.stats.crafted > before.world.stats.crafted);
+    assert.equal(after.world.gold, before.world.gold);
+    results.checks.push({
+      legacyV1: true,
+      originalBackup: true,
+      dailyMigrationBackup: true,
+      restoredJobCompleted: true,
+    });
+    await ctx.close();
+  }
+  for (const profile of ['desktop', 'mobile']) {
+    const ctx = await context(
+      profile === 'desktop'
+        ? { viewport: { width: 1366, height: 768 } }
+        : { ...devices['Pixel 7'], viewport: { width: 320, height: 740 } },
+    );
+    await seed(ctx, dayEncode(rich));
+    const p = await ctx.newPage();
+    await open(p);
+    await expect(p.locator('.save-state')).toHaveText('保存済み');
+    await equipment(p);
+    await p
+      .getByRole('button', {
+        name: '棚の薬草エキスを倉庫へ戻す →',
+        exact: true,
+      })
+      .click();
+    await p
+      .getByRole('button', { name: '薬草エキスを倉庫へ', exact: true })
+      .click();
+    await equipment(p, '蒸留器 #2');
+    await p
+      .getByRole('button', { name: '自動合成を開始', exact: true })
+      .click();
+    await day(p);
+    await equipment(p, '蒸留器 #2');
     await p
       .getByRole('button', { name: '次の合成を停止', exact: true })
       .click();
     await expect(p.getByTestId('equipment-detail')).toContainText('仕上げ中');
-    await p.clock.runFor(12000);
-    await go(p, '在庫・販売');
-    await expect(p.getByTestId('inventory-extract')).toHaveText('1');
+    await day(p);
+    assert.ok((await read(p)).world.inventory.extract >= 3);
     await equipment(p);
     await p
       .getByRole('button', { name: '月影の遺跡への派遣を開く →', exact: true })
       .click();
     await expect(p.getByLabel('イリスの探索先')).toHaveValue('ruins');
     await p.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-    await p.clock.runFor(30000);
-    await expect(p.getByTestId('adventurer-iris')).toContainText('待機中');
+    await day(p);
+    await day(p);
+    assert.equal((await read(p)).world.inventory.crystal, 2);
     await settings(p);
     await p.getByLabel('動きを控えめにする', { exact: true }).check();
     await p.getByLabel('文字の大きさ', { exact: true }).selectOption('largest');
@@ -371,27 +364,27 @@ try {
       p.getByLabel('出来事の音を鳴らす', { exact: true }),
     ).toBeChecked();
     await close(p);
+    await go(p, '店・在庫');
+    await p
+      .locator('[data-art] img')
+      .evaluateAll((images) => Promise.all(images.map((img) => img.decode())));
     assert.equal(
       await p.evaluate(() => document.documentElement.scrollWidth > innerWidth),
       false,
     );
-    await go(p, '冒険者');
-    await p
-      .locator('[data-art] img')
-      .evaluateAll((images) => Promise.all(images.map((img) => img.decode())));
-    await p.screenshot({
-      path: `${root}/${profile}-advanced.png`,
-      fullPage: true,
-    });
+    await p.screenshot({ path: `${root}/${profile}-advanced.png` });
+    const end = await read(p);
+    assert.equal(end.shop.salesTotal, end.world.stats.sold);
     results.checks.push({
       profile,
-      allArtworkDecoded: true,
-      stillFinishing: true,
+      storeLevel3: true,
       materialRoutes: true,
+      stillFinishing: true,
       ruinsReturn: true,
       preferencesRestored: true,
+      noDoubleSales: true,
     });
-    await advanced.close();
+    await ctx.close();
   }
 } finally {
   await browser.close();

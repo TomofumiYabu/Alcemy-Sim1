@@ -1,6 +1,9 @@
-import type { Command, GameState } from '../game/types';
+import type { GameState } from '../game/types';
+import type { Shelf } from '../game/dayTypes';
+import type { DayCommand } from '../game/dayTypes';
 export type PanelProps = {
   state: GameState;
-  send: (command: Command) => boolean;
+  shelves?: readonly Shelf[] | undefined;
+  send: (command: DayCommand) => boolean;
 };
 export type { Navigate, Screen } from './navigation';

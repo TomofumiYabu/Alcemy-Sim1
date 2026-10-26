@@ -2,7 +2,7 @@ import { adventurerTypes } from '../game/content';
 import type { GameState } from '../game/types';
 import { IrisPortrait } from './Artwork';
 import type { Feedback } from './feedback';
-import { seconds } from './format';
+import { workAmount } from './format';
 import type { Navigate } from './types';
 
 export function AdventureBrief({
@@ -31,7 +31,7 @@ export function AdventureBrief({
           {!iris.hired
             ? '採集家を雇って森へ'
             : iris.trip
-              ? `帰還まであと${seconds(iris.trip.remaining)}`
+              ? `帰還まであと${workAmount(iris.trip.remaining)}`
               : returned
                 ? '素材を持って帰還しました'
                 : '待機中 · 次の派遣を選ぶ'}
