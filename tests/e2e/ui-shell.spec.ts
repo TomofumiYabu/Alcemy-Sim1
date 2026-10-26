@@ -63,7 +63,7 @@ test('target viewports keep the HUD and navigation visible with usable workshop 
         page.getByRole('button', { name: '自動合成を開始', exact: true }),
       ).toBeInViewport({ ratio: 1 });
     }
-    for (const name of ['冒険者', '在庫・販売', '研究', '工房'] as const) {
+    for (const name of ['冒険者', '店・在庫', '研究', '工房'] as const) {
       await go(page, name);
       await expect(
         page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -129,7 +129,7 @@ test('keyboard alone completes the first loop, places and moves machines, and ca
   if (isMobile) await page.keyboard.press('Escape');
   await keyboardActivate(page, '研究');
   await page.clock.fastForward(26_000);
-  await keyboardActivate(page, '在庫・販売');
+  await keyboardActivate(page, '店・在庫');
   await keyboardActivate(page, '傷薬を販売');
   await keyboardActivate(page, '研究');
   await keyboardActivate(page, '森の恵みを研究');
@@ -185,7 +185,7 @@ test('200 percent text remains operable and each screen keeps its scroll positio
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '200%';
   });
-  for (const name of ['冒険者', '在庫・販売', '研究', '工房'] as const) {
+  for (const name of ['冒険者', '店・在庫', '研究', '工房'] as const) {
     await go(page, name);
     expect(
       await page.evaluate(
@@ -197,8 +197,8 @@ test('200 percent text remains operable and each screen keeps its scroll positio
         name:
           name === '冒険者'
             ? '冒険者ギルド'
-            : name === '在庫・販売'
-              ? '在庫と販売'
+            : name === '店・在庫'
+              ? '店と在庫'
               : name === '研究'
                 ? '錬金術の研究'
                 : '錬金術工房',

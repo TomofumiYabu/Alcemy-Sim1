@@ -4,7 +4,7 @@ import {
   salePrice,
 } from '../game/engine';
 import type { GameState, ResearchId } from '../game/types';
-import { seconds } from './format';
+import { workAmount } from './format';
 import type { GuidedAction } from './navigation';
 import type { IconName } from './Icon';
 
@@ -24,7 +24,7 @@ export function researchExample(state: GameState, id: ResearchId): string {
     ? state
     : { ...state, research: [...state.research, id] };
   if (id === 'production-1' || id === 'production-3')
-    return `傷薬 ${seconds(getCraftPreview(state, 'potion').total)} → ${seconds(getCraftPreview(next, 'potion').total)}`;
+    return `傷薬 ${workAmount(getCraftPreview(state, 'potion').total)} → ${workAmount(getCraftPreview(next, 'potion').total)}`;
   if (id === 'gathering-1')
     return `森の薬草 ${getExpeditionPreview(state, 'forest').rewards.herb} → ${getExpeditionPreview(next, 'forest').rewards.herb}個`;
   if (id === 'knowledge-1')

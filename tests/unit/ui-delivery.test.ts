@@ -99,10 +99,10 @@ describe('material routes and research previews', () => {
   it('uses the engine’s current preview and leaves progress untouched', () => {
     const state = createGame();
     const original = structuredClone(state);
-    expect(researchExample(state, 'production-1')).toBe('傷薬 8.0秒 → 7.2秒');
+    expect(researchExample(state, 'production-1')).toBe('傷薬 80作業 → 72作業');
     state.research = ['production-1'];
     expect(researchExample(state, 'production-3')).toContain(
-      `${getCraftPreview(state, 'potion').total / 10}秒 → 6.4秒`,
+      `${getCraftPreview(state, 'potion').total}作業 → 64作業`,
     );
     state.research = [];
     expect(state).toEqual(original);

@@ -1,32 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createDayGame } from '../game/dayEngine';
+import type { DayCommand, DayState } from '../game/dayTypes';
 import {
-  advanceWithEvents,
-  applyCommand,
-  createGame,
-  TICK_MS,
-} from '../game/engine';
-import type { Command, GameState } from '../game/types';
-import { loadGame, SAVE_KEY, saveGame } from '../persistence/save';
+  commitDayCommand,
+  loadDayGame,
+  SAVE_KEY,
+  saveDayGame,
+} from '../persistence/daySave';
 import { createSaveSession } from '../persistence/session';
 import type { SaveSession, SessionRole } from '../persistence/session';
 import { useFeedback } from './useFeedback';
 
+const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] || 1;
 export function useGame() {
   const { feedback, publishFeedback, clearFeedback } = useFeedback();
-  const [initial] = useState(() => {
-    try {
-      return loadGame(window.localStorage);
-    } catch {
-      return {
-        state: createGame(),
-        blocked: true,
-        message:
-          '保存領域を読み込めません。新しい工房を保存なしで始められます。',
-      };
-    }
-  });
-  const [state, setState] = useState(initial.state);
-  const current = useRef(state);
+  const [seed] = useState(newSeed);
+  const [initial] = useState(() => loadDayGame(window.localStorage, seed));
+  const [day, setDay] = useState(initial.state);
+  const current = useRef(day);
   const [blocked, setBlocked] = useState(initial.blocked);
   const blockedRef = useRef(initial.blocked);
   const session = useRef<SaveSession | null>(null);
@@ -34,38 +25,26 @@ export function useGame() {
   const [saveError, setSaveError] = useState<string | null>(initial.message);
   const [notice, setNotice] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const persist = useCallback((next: GameState) => {
-    if (!session.current?.isOwner() || blockedRef.current) return;
-    let error: string | null;
-    try {
-      error = saveGame(window.localStorage, next);
-    } catch {
-      error = '保存に失敗しました。ブラウザーの保存設定を確認してください。';
-    }
+  const update = useCallback((next: DayState) => {
+    current.current = next;
+    setDay(next);
+  }, []);
+  const persist = useCallback((next: DayState) => {
+    if (!session.current?.isOwner() || blockedRef.current) return false;
+    const error = saveDayGame(window.localStorage, next);
     setSaveError(error);
     setSaved(error === null);
-  }, []);
-  const update = useCallback((next: GameState) => {
-    current.current = next;
-    setState(next);
+    return error === null;
   }, []);
   useEffect(() => {
     const reload = () => {
       clearFeedback();
-      let loaded;
-      try {
-        loaded = loadGame(window.localStorage);
-      } catch {
-        loaded = {
-          state: createGame(),
-          blocked: true,
-          message: '保存領域を読み込めません。',
-        };
-      }
+      const loaded = loadDayGame(window.localStorage, seed);
       update(loaded.state);
       blockedRef.current = loaded.blocked;
       setBlocked(loaded.blocked);
       setSaveError(loaded.message);
+      setNotice(null);
       setSaved(false);
     };
     const connect = () => {
@@ -74,7 +53,7 @@ export function useGame() {
       try {
         locks = navigator.locks;
       } catch {
-        /* unavailable in this browser */
+        /* unavailable */
       }
       session.current = createSaveSession(locks, reload, setRole);
     };
@@ -88,81 +67,78 @@ export function useGame() {
     const changed = (event: StorageEvent) => {
       if (event.key === SAVE_KEY && !session.current?.isOwner()) reload();
     };
+    const visible = () => {
+      if (document.hidden) clearFeedback();
+    };
     connect();
     window.addEventListener('pagehide', leave);
     window.addEventListener('pageshow', connect);
     window.addEventListener('storage', changed);
+    document.addEventListener('visibilitychange', visible);
     return () => {
       window.removeEventListener('pagehide', leave);
       window.removeEventListener('pageshow', connect);
       window.removeEventListener('storage', changed);
+      document.removeEventListener('visibilitychange', visible);
       leave();
     };
-  }, [update, persist, clearFeedback]);
-  const send = useCallback(
-    (command: Command) => {
-      if (blockedRef.current || !session.current?.isOwner()) return false;
-      const result = applyCommand(current.current, command);
-      setNotice(result.error);
-      if (!result.error) {
-        update(result.state);
-        persist(result.state);
-        publishFeedback(result.events);
-      }
-      return result.error === null;
-    },
-    [blocked, update, persist, publishFeedback],
-  );
+  }, [seed, update, persist, clearFeedback]);
+  // Only persistence uses time. No wall clock advances work, customers, or days.
   useEffect(() => {
     if (blocked || role !== 'owner') return;
-    let last = performance.now();
-    let remainder = 0;
-    const resetClock = () => {
-      if (document.hidden) clearFeedback();
-      last = performance.now();
-      remainder = 0;
-      persist(current.current);
-    };
-    const interval = window.setInterval(() => {
-      const now = performance.now();
-      if (document.hidden || !session.current?.isOwner()) {
-        last = now;
-        remainder = 0;
-        return;
+    persist(current.current);
+    const autosave = window.setInterval(() => persist(current.current), 5000);
+    return () => window.clearInterval(autosave);
+  }, [blocked, role, persist]);
+  const send = useCallback(
+    (command: DayCommand) => {
+      if (blockedRef.current || !session.current?.isOwner()) return false;
+      const result = commitDayCommand(
+        window.localStorage,
+        current.current,
+        command,
+      );
+      if (result.error) {
+        if (result.error.startsWith('保存')) {
+          setSaveError(result.error);
+          setSaved(false);
+          setNotice(null);
+        } else setNotice(result.error);
+        return false;
       }
-      remainder += Math.min(Math.max(now - last, 0), 60_000);
-      last = now;
-      const ticks = Math.floor(remainder / TICK_MS);
-      if (ticks > 0) {
-        remainder -= ticks * TICK_MS;
-        const result = advanceWithEvents(current.current, ticks);
-        update(result.state);
-        publishFeedback(result.events);
-      }
-    }, TICK_MS);
-    const autosave = window.setInterval(() => persist(current.current), 5_000);
-    document.addEventListener('visibilitychange', resetClock);
-    return () => {
-      window.clearInterval(interval);
-      window.clearInterval(autosave);
-      document.removeEventListener('visibilitychange', resetClock);
-    };
-  }, [blocked, role, update, persist, publishFeedback, clearFeedback]);
+      update(result.state);
+      setSaveError(null);
+      setSaved(true);
+      setNotice(null);
+      publishFeedback(result.events);
+      return true;
+    },
+    [update, publishFeedback],
+  );
   const reset = () => {
-    if (!session.current?.isOwner()) return false;
-    if (!window.confirm('工房の進行を初期化します。よろしいですか？'))
+    if (
+      !session.current?.isOwner() ||
+      !window.confirm('工房の進行を初期化します。よろしいですか？')
+    )
       return false;
-    const next = createGame();
+    const next = createDayGame(newSeed());
+    const error = saveDayGame(window.localStorage, next, true);
+    if (error) {
+      setSaveError(error);
+      return false;
+    }
     clearFeedback();
     update(next);
     blockedRef.current = false;
     setBlocked(false);
     setNotice(null);
-    persist(next);
+    setSaveError(null);
+    setSaved(true);
     return true;
   };
   return {
-    state,
+    state: day.world,
+    day,
     role,
     blocked,
     saveError,

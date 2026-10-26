@@ -44,7 +44,7 @@ test('room, cauldron and Iris load and the cauldron only lights while a batch is
   await page.clock.runFor(8_000);
   await expect(page.locator('.cauldron-fire')).toHaveCount(0);
   await expect(page.getByTestId('equipment-detail')).toContainText('停止中');
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   for (const name of ['herb', 'water', 'potion'])
     await expect(
       page.locator(`#inventory [data-art="${name}"]`),
@@ -76,7 +76,7 @@ test('real completion, return, sale and research show their results and a reload
     '薬草 +4',
   );
   await page.clock.runFor(9_300);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('3');
   await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
   await expect(page.locator('[data-feedback="sold"]')).toContainText(
@@ -154,7 +154,7 @@ test('twenty-four simultaneous completions produce one accurate message and clea
     document.dispatchEvent(new Event('visibilitychange'));
   });
   await expect(page.locator('.feedback-card')).toHaveCount(0);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('24');
 });
 
@@ -186,7 +186,7 @@ test('failed artwork retains names, controls, production and selling', async ({
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
   await page.clock.runFor(8_100);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
   await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
   await expect(page.getByTestId('gold')).toHaveText('112');
@@ -257,7 +257,7 @@ test('a waiting tab and the next owner never replay another session’s feedback
     { key: SAVE_KEY, value: encodeSave(state) },
   );
   await open(page);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.getByRole('button', { name: '傷薬を販売', exact: true }).click();
   await expect(page.locator('[data-feedback="sold"]')).toBeVisible();
   const other = await context.newPage();

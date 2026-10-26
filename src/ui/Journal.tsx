@@ -12,10 +12,7 @@ export function Journal({ state }: Pick<PanelProps, 'state'>) {
       <ol>
         {state.log.slice(0, 8).map((entry, index) => (
           <li key={`${entry.tick}-${index}`}>
-            <time>
-              {Math.floor(entry.tick / 600)}:
-              {String(Math.floor(entry.tick / 10) % 60).padStart(2, '0')}
-            </time>
+            <span className="journal-time">{entry.tick}作業</span>
             <span>{entry.message}</span>
           </li>
         ))}

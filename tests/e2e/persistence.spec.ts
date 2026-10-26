@@ -99,7 +99,7 @@ test('autosave records elapsed work and pagehide saves the latest remaining time
   expect(restored.tick).toBe(53);
   expect(restored.equipment[0].job.remaining).toBe(28);
   expect(restored.adventurers[0].trip.remaining).toBe(97);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.clock.runFor(2_800);
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
   await go(page, '冒険者');
@@ -174,7 +174,7 @@ test('the released v1 save is migrated with a backup and its old work continues'
     page.getByRole('button', { name: '今すぐ保存', exact: true }),
   ).toBeEnabled();
   await closeOverlay(page);
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.clock.runFor(5_100);
   await expect(page.getByTestId('inventory-potion')).toHaveText('1');
   await expect(page.getByTestId('knowledge')).toHaveText('1');

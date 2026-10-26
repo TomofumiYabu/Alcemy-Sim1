@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { adventurerTypes, destinations, items } from '../game/content';
 import { getExpeditionPreview, unlocked } from '../game/engine';
 import type { AdventurerId, DestinationId } from '../game/types';
-import { seconds } from './format';
+import { workAmount } from './format';
 import type { Navigate, PanelProps } from './types';
 import { CharacterPortrait, DestinationArtwork, ItemArtwork } from './Artwork';
 import type { ItemId } from '../game/types';
@@ -181,7 +181,7 @@ export function ExpeditionPanel({
                         {items[id as ItemId].name} +{count}
                       </span>
                     ))}
-                  <span>所要 {seconds(preview.total)}</span>
+                  <span>所要 {workAmount(preview.total)}</span>
                 </div>
                 {entry.trip && (
                   <>
@@ -191,7 +191,7 @@ export function ExpeditionPanel({
                       value={entry.trip.total - entry.trip.remaining}
                     />
                     <p className="production-status">
-                      帰還まであと{seconds(entry.trip.remaining)} ·
+                      帰還まであと{workAmount(entry.trip.remaining)} ·
                       報酬は出発時に確定
                     </p>
                   </>

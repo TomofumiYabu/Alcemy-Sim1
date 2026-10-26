@@ -1049,3 +1049,34 @@ input[type='checkbox'] {
     white-space: nowrap;
   }
 }
+
+/* Explicit daily preparation and saved shop reports. */
+.day-bar {display:flex;align-items:center;justify-content:space-between;gap:.65rem;padding:.6rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;background:#162d2e;}
+.day-bar small {display:block;color:#b6c7bd;font-size:.8rem;}
+.day-actions {display:flex;gap:.4rem;flex-wrap:wrap;}
+.shop-overview {border:1px solid #62796a;padding:.8rem;border-radius:.6rem;display:flex;gap:.4rem 1.2rem;flex-wrap:wrap;}
+.shop-overview p {margin:0;}
+.shop-note {color:#dbbd75;}
+.shop-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:.8rem;}
+.shop-product {min-width:0;padding:.8rem;border:1px solid #62796a;border-radius:.6rem;background:#163030;}
+.shop-product-heading {display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.shop-product-heading .artwork {width:2.7rem;height:2.7rem;}
+.shop-product-heading h3 {margin:0;}
+.shop-product-heading>span:last-child {font-size:.85rem;}
+.shop-product label {display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;}
+.shop-product input {width:6rem;max-width:100%;min-height:44px;}
+.shop-buttons {display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+.shop-buttons button {white-space:normal;overflow-wrap:anywhere;}
+.raw-stock {display:grid;gap:.4rem;}
+.raw-stock .artwork {width:2.4rem;height:2.4rem;}
+.raw-stock .inventory-row {grid-template-columns:2.5rem 1fr auto;}
+.day-report {min-width:0;}
+.report-table-wrap {overflow-x:auto;max-width:100%;}
+.day-report table {border-collapse:collapse;width:100%;font-size:.9rem;}
+.day-report th,.day-report td {padding:.45rem .3rem;text-align:left;border-bottom:1px solid #62796a;}
+.day-report caption {text-align:left;margin-bottom:.4rem;}
+.day-report ul,.day-report ol {padding-left:1.4rem;}
+.day-report details {margin:.7rem 0;}
+.day-continue {margin-top:.8rem;}
+.journal-time {font-size:.75rem;color:#b6c7bd;}
+@media(max-width:600px){.day-bar {padding:.5rem .75rem;}.day-bar strong {font-size:.9rem;}.day-actions button {padding:.5rem .6rem;}.shop-product {padding:.65rem;}}

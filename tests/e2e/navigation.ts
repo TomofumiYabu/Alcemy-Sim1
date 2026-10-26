@@ -1,6 +1,16 @@
 import type { Page } from '@playwright/test';
 
 export async function closeOverlay(page: Page) {
+  const report = page.getByRole('dialog', { name: /営業日報$/ });
+  if (await report.isVisible()) {
+    const next = report.getByRole('button', {
+      name: '翌日の準備へ',
+      exact: true,
+    });
+    if (await next.isVisible()) await next.click();
+    else
+      await report.getByRole('button', { name: '閉じる', exact: true }).click();
+  }
   for (const title of ['設備の詳細', '設定とヘルプ', '工房の記録']) {
     const dialog = page.getByRole('dialog', { name: title, exact: true });
     if (await dialog.isVisible())
@@ -11,7 +21,7 @@ export async function closeOverlay(page: Page) {
 }
 export async function go(
   page: Page,
-  name: '工房' | '冒険者' | '在庫・販売' | '研究',
+  name: '工房' | '冒険者' | '店・在庫' | '研究',
 ) {
   await closeOverlay(page);
   await page

@@ -37,7 +37,7 @@ test('new workshop completes the real gather-craft-sell-research loop and restor
   await expect(page.getByTestId('knowledge')).toHaveText('3');
   await go(page, '冒険者');
   await expect(page.getByTestId('adventurer-iris')).toContainText('待機中');
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('3');
   await expect(
     page.getByRole('button', { name: '傷薬を販売', exact: true }),
@@ -108,7 +108,7 @@ test('placement is atomic and competing machines cannot consume the same materia
     .click();
   await page.clock.fastForward(9_000);
   await expect(page.getByTestId('equipment-detail')).toContainText('素材待ち');
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await expect(page.getByTestId('inventory-potion')).toHaveText('2');
   await expect(page.getByTestId('inventory-herb')).toHaveText('0');
   await expect(page.getByTestId('inventory-water')).toHaveText('0');
@@ -155,7 +155,7 @@ test('storage quota failure is visible and does not stop the current game', asyn
   await expect(page.getByTestId('gold')).toHaveText('80');
   await expect(page.getByRole('status')).toHaveText('保存に失敗');
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.clock.fastForward(15_000);
   await expect(page.getByTestId('inventory-herb')).toHaveText('8');
 });
@@ -219,7 +219,7 @@ test('research unlocks automation, distillation, the ruins and a sellable mana p
   await page
     .getByRole('button', { name: '自動合成を開始', exact: true })
     .click();
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.clock.fastForward(31_000);
   await expect(page.getByTestId('inventory-mana')).toHaveText('1');
   await page.getByRole('button', { name: '魔力薬を販売', exact: true }).click();
@@ -243,7 +243,7 @@ test('hidden time is not added when returning to the workshop', async ({
   await go(page, '冒険者');
   await page.getByRole('button', { name: 'イリスを雇う', exact: true }).click();
   await page.getByRole('button', { name: 'イリスを派遣', exact: true }).click();
-  await go(page, '在庫・販売');
+  await go(page, '店・在庫');
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', {
       configurable: true,
