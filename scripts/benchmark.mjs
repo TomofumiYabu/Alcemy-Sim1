@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { verificationFixtures } from './lib/game-fixtures.mjs';
 import { verificationOptions } from './lib/verification-options.mjs';
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 const options = verificationOptions('benchmark');
@@ -37,6 +37,21 @@ try {
     .locator('[data-art] img')
     .evaluateAll((images) => Promise.all(images.map((img) => img.decode())));
   await page.bringToFront();
+  await expect(page.locator('.save-state')).toHaveText('保存済み');
+  const dailyResolutionMs = await page.evaluate(async () => {
+    const start = performance.now();
+    [...document.querySelectorAll('button')]
+      .find((b) => b.textContent === '1日営業する')
+      .click();
+    await new Promise(requestAnimationFrame);
+    return performance.now() - start;
+  });
+  const report = page.getByRole('dialog', { name: /営業日報$/ });
+  await expect(report).toBeVisible();
+  await page.screenshot({ path: `${options.output}/report.png` });
+  await report
+    .getByRole('button', { name: '翌日の準備へ', exact: true })
+    .click();
   await page.waitForFunction(
     () =>
       document.querySelectorAll('.floor-cell[data-state="working"]').length ===
@@ -114,8 +129,9 @@ try {
   }));
   const times = navigation.map((x) => x.ms).sort((a, b) => a - b);
   assert.equal(runtime.active, 24);
-  assert.ok(Number(runtime.knowledge) >= 24);
-  assert.ok(runtime.products.potion >= 12 && runtime.products.extract >= 12);
+  assert.equal(Number(runtime.knowledge), 36);
+  assert.equal(runtime.products.potion, 24);
+  assert.equal(runtime.products.extract, 12);
   assert.ok(runtime.feedbackCount <= 2);
   assert.deepEqual(errors, []);
   assert.ok(navigation.every((x) => x.rendered));
@@ -133,7 +149,8 @@ try {
         'navigation handler click to next requestAnimationFrame, 20 samples',
     },
     scenario:
-      'Cloud Chromium / production Pages path / 1366x768 / 12 cauldrons + 12 stills',
+      'Cloud Chromium / production Pages path / 1366x768 / one explicit day / 12 cauldrons + 12 stills',
+    dailyResolutionMs,
     navigation: {
       samples: times.length,
       allRendered: navigation.every((x) => x.rendered),

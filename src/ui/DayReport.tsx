@@ -51,10 +51,12 @@ export function DayReport({
           <tbody>
             {recipeIds.map((id) => (
               <tr key={id}>
-                <th>{items[id].name}</th>
-                <td>{report.sold[id]}個</td>
-                <td>{number(report.sold[id] * report.prices[id])}金貨</td>
-                <td>
+                <th scope="row">{items[id].name}</th>
+                <td data-label="販売">{report.sold[id]}個</td>
+                <td data-label="売上">
+                  {number(report.sold[id] * report.prices[id])}金貨
+                </td>
+                <td data-label="棚残数">
                   {report.closingShelves.find((s) => s.item === id)?.quantity ??
                     0}
                   個
