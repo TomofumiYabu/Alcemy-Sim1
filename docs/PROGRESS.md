@@ -1,6 +1,12 @@
 # 進捗・引き継ぎ
 
-最終更新: 2026-10-26。現在のT1は「1日1ターン＋来店客が陳列品を買う店舗営業」の実装・ローカル検証を完了し、draft PR/CIの段階。作業ブランチは `codex/day-turn-shop`。過去のRFは完了・公開済み（`c1b76ad`）で、今回の新機能はマージ・公開していない。詳細は [T1納品記録](T1-DELIVERY-2026-10-26.md)。
+最終更新: 2026-10-26。現在のT1は「1日1ターン＋来店客が陳列品を買う店舗営業」の実装・ローカル検証とPR CIまで完了。[Draft PR #5](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5)へ提出済み。作業ブランチは `codex/day-turn-shop`。過去のRFは完了・公開済み（`c1b76ad`）で、今回の新機能はマージ・公開していない。詳細は [T1納品記録](T1-DELIVERY-2026-10-26.md)。
+
+## T1提出・CI結果
+
+- PR #5はdraft/open/unmerged。このタスクへ添付済み、main `69b8538` と競合なし。head `d7a84a2` の [CI #14](https://github.com/TomofumiYabu/Alcemy-Sim1/actions/runs/40322964605) はbuild成功、ログで83＋80＋80＝243件成功を確認。upload/deployはskipped。
+- 本節はCI成功後の文書追記。最終文書headにも自動CIが走るため、最新の [Checks](https://github.com/TomofumiYabu/Alcemy-Sim1/pull/5/checks) と最終報告で結果を照合する。アプリの変更は `6912814` 以降なし。
+- 検証用previewは停止、作業は通常pushで保存。今回のマージ・公開・配信後確認は未実施で、過去のRF公開許可を流用していない。承認拒否・環境待ち・結果不明は残っていない。
 
 ## T1最終ローカル結果
 
